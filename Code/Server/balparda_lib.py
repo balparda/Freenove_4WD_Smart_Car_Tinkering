@@ -7,12 +7,17 @@ import Led
 
 class Engine():
     
+  _GAIN = 400
+    
   def __init__(self):
     self._m = Motor.Motor()
     
   def Move(self, a, b, c, d, tm):
     try:
-      self._m.setMotorModel(400*a, 400*b, 400*c, 400*d)
+      self._m.setMotorModel(Engine._GAIN * a,
+                            Engine._GAIN * b,
+                            Engine._GAIN * c,
+                            Engine._GAIN * d)
       time.sleep(tm)
     finally:
       self._m.setMotorModel(0, 0, 0, 0)
@@ -40,6 +45,18 @@ class Noise():
     self._b.run('0')
 
 
-class Led():
-  pass
+class Light():
+  
+  def __init__(self, led_dict):
+    self._l = Led.Led()
+    self._dict = led_dict
+    if not self._dict:
+      raise Exception('Empty led_dict')
+    
+  def __enter__(self):
+    for n, (r, g, b) in self._dict.items():
+      self._l.ledIndex(1 << n, r, g, b)
+
+  def __exit__(self, a, b, c):
+    self._l.colorWipe(self._l.strip, Led.Color(0, 0, 0))
 
