@@ -1,8 +1,13 @@
+"""Balparda's car API."""
+
 import time
+
 import ADC
-import Motor
 import Buzzer
 import Led
+import Motor
+import servo
+import Ultrasonic
 
 
 class Battery():
@@ -49,10 +54,10 @@ class Engine():
     
   def Move(self, a, b, c, d, tm):
     try:
-      self._m.setMotorModel(Engine._GAIN * a,
-                            Engine._GAIN * b,
-                            Engine._GAIN * c,
-                            Engine._GAIN * d)
+      self._m.setMotorModel(round(Engine._GAIN * a),
+                            round(Engine._GAIN * b),
+                            round(Engine._GAIN * c),
+                            round(Engine._GAIN * d))
       time.sleep(tm)
     finally:
       self._m.setMotorModel(0, 0, 0, 0)
@@ -94,4 +99,66 @@ class Light():
 
   def __exit__(self, a, b, c):
     self._l.colorWipe(self._l.strip, Led.Color(0, 0, 0))
+
+
+class Sonar():
+
+  def __init__(self):
+    self._s = Ultrasonic.Ultrasonic()
+
+  def Read(self):
+    return self._s.get_distance() / 100.0
+
+  def __str__(self):
+    return "Distance: %0.3f meters" % self.Read()
+
+  def __repr__(self):
+    return repr(self.Read())
+
+
+class Neck():
+
+  _NAME = {
+      'H': '0',
+      'V': '1',
+  }
+
+  def __init__(self, offset={'H': 0.0, 'V': 0.0}):
+    self._s = servo.Servo()
+    self._o = offset
+    if not self._o:
+      raise Exception('Empty offset')
+
+  def Set(self, servo_dict):
+    for t, a in servo_dict.items():
+      t = t.upper()
+      if a < -70.0:
+        a = -70.0
+      if t == 'V' and a < -20.0:
+        a = -20.0
+      if a > 70.0:
+        a = 70.0
+      self._s.setServoPwm(Neck._NAME[t], round(a + 90.0 + self._o[t]))
+
+  def Zero(self):
+    self.Set({'H': 0.0, 'V': 0.0})
+
+  def Demo(self):
+    self.Zero()
+    try:
+      for a in range(-20, 70, 1):
+        self.Set({'V': a})
+        time.sleep(0.02)
+      for a in range(70, -20, -1):
+        self.Set({'V': a})
+        time.sleep(0.02)
+      self.Zero()
+      for a in range(-70, 70, 1):
+        self.Set({'H': a})
+        time.sleep(0.02)
+      for a in range(70, -70, -1):
+        self.Set({'H': a})
+        time.sleep(0.02)
+    finally:
+      self.Zero()
 

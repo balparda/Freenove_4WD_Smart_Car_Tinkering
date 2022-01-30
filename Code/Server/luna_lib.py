@@ -21,11 +21,11 @@ class BB():  # bi-bi, barulho, luz
 
 
 def Fr():  # frente
-  _ENG.Straight(2, 1.5)
+  _ENG.Straight(1.5, 1.5)
 
   
 def Tr():  # tras
-  _ENG.Straight(-2, 1.5)
+  _ENG.Straight(-1.5, 1.5)
 
   
 def Di():  # direita
