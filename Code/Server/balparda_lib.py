@@ -1,8 +1,43 @@
 import time
+import ADC
 import Motor
-#import ADC
 import Buzzer
 import Led
+
+
+class Battery():
+
+  _BATTERY_FACTOR = 3.0
+  _BATTERY_INDEX = 3
+
+  def __init__(self):
+    self._a = ADC.Adc()
+
+  def Read(self):
+    return Battery._BATTERY_FACTOR * self._a.recvADC(Battery._BATTERY_INDEX)
+
+  def __str__(self):
+    return "Battery: %0.2f Volts" % self.Read()
+
+  def __repr__(self):
+    return repr(self.Read())
+
+
+class Photoresistor():
+
+  _PHOTO_INDEX = (0, 1)
+
+  def __init__(self):
+    self._a = ADC.Adc()
+
+  def Read(self):
+    return (self._a.recvADC(Photoresistor._PHOTO_INDEX[0]), self._a.recvADC(Photoresistor._PHOTO_INDEX[1]))
+
+  def __str__(self):
+    return "Photoresistor:  Left %0.2f  /  Right %0.2f" % self.Read()
+
+  def __repr__(self):
+    return repr(self.Read())
 
 
 class Engine():
