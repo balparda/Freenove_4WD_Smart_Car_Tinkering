@@ -6,10 +6,12 @@ bt = lib.Battery()
 ph = lib.Photoresistor()
 sn = lib.Sonar()
 nk = lib.Neck(offset={'H': 6.0, 'V': -23.0})
+ir = lib.Infra()
 
 print(bt)
 print(ph)
 print(sn)
+print(ir)
 
 with BB():
 

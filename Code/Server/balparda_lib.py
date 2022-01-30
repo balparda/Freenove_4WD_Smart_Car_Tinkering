@@ -5,6 +5,7 @@ import time
 import ADC
 import Buzzer
 import Led
+import Line_Tracking
 import Motor
 import servo
 import Ultrasonic
@@ -161,4 +162,22 @@ class Neck():
         time.sleep(0.02)
     finally:
       self.Zero()
+
+
+class Infra():
+
+  def __init__(self):
+    self._l = Line_Tracking.Line_Tracking()
+
+  def Read(self):
+    return (Line_Tracking.GPIO.input(self._l.IR01)==True,
+            Line_Tracking.GPIO.input(self._l.IR02)==True,
+            Line_Tracking.GPIO.input(self._l.IR03)==True)
+
+  def __str__(self):
+    l ,m , r = self.Read()
+    return "Infrared: [ %s - %s - %s ]" % ('LL' if l else '..', 'MM' if m else '..', 'RR' if r else '..')
+
+  def __repr__(self):
+    return repr(self.Read())
 
