@@ -1,4 +1,7 @@
+
+import pdb
 import time
+
 import balparda_lib as lib
 from luna_lib import *
 
@@ -13,9 +16,14 @@ print(ph)
 print(sn)
 print(ir)
 
-with BB():
+with lib.Cam() as cam:#, BB():
 
-  nk.Demo()
+  pdb.set_trace()
+  img = cam.Greyscale()
+  # continue: https://scipy-lectures.org/advanced/image_processing/
+  
+
+  #nk.Demo()
 
   raise
 

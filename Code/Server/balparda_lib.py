@@ -1,12 +1,18 @@
 """Balparda's car API."""
 
+import io
+import numpy
+import pdb
 import time
+
+from PIL import Image
 
 import ADC
 import Buzzer
 import Led
 import Line_Tracking
 import Motor
+import picamera
 import servo
 import Ultrasonic
 
@@ -81,6 +87,7 @@ class Noise():
     
   def __enter__(self):
     self._b.run('1')
+    return self
 
   def __exit__(self, a, b, c):
     self._b.run('0')
@@ -97,6 +104,7 @@ class Light():
   def __enter__(self):
     for n, (r, g, b) in self._dict.items():
       self._l.ledIndex(1 << n, r, g, b)
+    return self
 
   def __exit__(self, a, b, c):
     self._l.colorWipe(self._l.strip, Led.Color(0, 0, 0))
@@ -180,4 +188,46 @@ class Infra():
 
   def __repr__(self):
     return repr(self.Read())
+
+
+class Cam():
+
+  # this is the size if you ask for a JPG; aspect is 4:3
+  _WIDTH = 2592
+  _HEIGHT = 1944
+  _ASPECT = 4.0 / 3.0
+  _DEFAULT_RESOLUTION = (800, 600)
+  _DEFAULT_FRAMERATE = 10
+  _SLEEP_TO_INIT = 1.5
+
+  def __init__(self, resolution=_DEFAULT_RESOLUTION, framerate=_DEFAULT_FRAMERATE):
+    self._c = None
+    self._resolution = resolution
+    self._framerate = framerate
+
+  def __enter__(self):
+    self._c = picamera.PiCamera(resolution=self._resolution, framerate=self._framerate)
+    time.sleep(Cam._SLEEP_TO_INIT)
+    return self
+
+  def __exit__(self, a, b, c):
+    if not self._c:
+      raise Exception('Not initialized')
+    self._c.close()
+    
+  def Click(self):
+    if not self._c:
+      raise Exception('Not initialized')
+    stream = io.BytesIO()
+    self._c.capture(stream, format='bmp')
+    stream.seek(0)
+    img = Image.open(stream)
+    stream.seek(0)
+    return (img, stream.read())
+   
+  def Greyscale(self):
+    img = self.Click()[0]
+    pix = numpy.array(img)
+    return numpy.round((pix[:,:,0] + pix[:,:,1] + pix[:,:,2]) / 3.0).astype(numpy.uint8)
+
 
