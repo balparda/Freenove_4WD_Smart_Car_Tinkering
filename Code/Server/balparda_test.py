@@ -1,3 +1,5 @@
+#!/usr/bin/python3 -O
+"""Testing (scratchpad) and child-friendly module."""
 
 import pdb
 import time
@@ -21,7 +23,7 @@ with lib.Cam() as cam:#, BB():
   pdb.set_trace()
   img = cam.Greyscale()
   # continue: https://scipy-lectures.org/advanced/image_processing/
-  
+
 
   #nk.Demo()
 
@@ -35,12 +37,11 @@ with lib.Cam() as cam:#, BB():
   raise
 
   Fr()
-    
-  Es()
-    
-  Di()
-    
-  Pa()
-    
-  Tr()
 
+  Es()
+
+  Di()
+
+  Pa()
+
+  Tr()

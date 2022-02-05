@@ -1,3 +1,6 @@
+#!/usr/bin/python3 -O
+"""Module will simplify car concepts to its bare minimal call, for beginner understanding."""
+
 import time
 import balparda_lib as lib
 
@@ -23,18 +26,18 @@ class BB():  # bi-bi, barulho, luz
 def Fr():  # frente
   _ENG.Straight(1.5, 1.5)
 
-  
+
 def Tr():  # tras
   _ENG.Straight(-1.5, 1.5)
 
-  
+
 def Di():  # direita
   _ENG.Turn(90)
 
-  
+
 def Es():  # esquerda
   _ENG.Turn(-90)
 
-  
+
 def Pa():  # pausa
   time.sleep(1.5)

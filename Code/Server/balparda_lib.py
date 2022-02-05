@@ -1,3 +1,4 @@
+#!/usr/bin/python3 -O
 """Balparda's car API."""
 
 import io
@@ -53,12 +54,12 @@ class Photoresistor():
 
 
 class Engine():
-    
+
   _GAIN = 400
-    
+
   def __init__(self):
     self._m = Motor.Motor()
-    
+
   def Move(self, a, b, c, d, tm):
     try:
       self._m.setMotorModel(round(Engine._GAIN * a),
@@ -71,7 +72,7 @@ class Engine():
 
   def Straight(self, speed, tm):
     self.Move(speed, speed, speed, speed, tm)
-  
+
   def Turn(self, angle):
     tm = abs(angle * (.7/90))
     if angle > 0:
@@ -81,10 +82,10 @@ class Engine():
 
 
 class Noise():
-    
+
   def __init__(self):
     self._b = Buzzer.Buzzer()
-    
+
   def __enter__(self):
     self._b.run('1')
     return self
@@ -94,13 +95,13 @@ class Noise():
 
 
 class Light():
-  
+
   def __init__(self, led_dict):
     self._l = Led.Led()
     self._dict = led_dict
     if not self._dict:
       raise Exception('Empty led_dict')
-    
+
   def __enter__(self):
     for n, (r, g, b) in self._dict.items():
       self._l.ledIndex(1 << n, r, g, b)
@@ -214,7 +215,7 @@ class Cam():
     if not self._c:
       raise Exception('Not initialized')
     self._c.close()
-    
+
   def Click(self):
     if not self._c:
       raise Exception('Not initialized')
@@ -224,10 +225,8 @@ class Cam():
     img = Image.open(stream)
     stream.seek(0)
     return (img, stream.read())
-   
+
   def Greyscale(self):
     img = self.Click()[0]
     pix = numpy.array(img)
     return numpy.round((pix[:,:,0] + pix[:,:,1] + pix[:,:,2]) / 3.0).astype(numpy.uint8)
-
-
