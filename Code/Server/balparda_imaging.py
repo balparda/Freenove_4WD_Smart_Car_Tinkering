@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -O
 """Imaging module."""
 
-import pdb
+#import pdb
 import sys
 
 # https://scipy-lectures.org/advanced/image_processing/
@@ -16,8 +16,14 @@ import imageio  # https://imageio.readthedocs.io/en/stable/
 
 
 class Image():
+  """General imaging class, tailored for car use."""
 
   def __init__(self, img):
+    """Load an `img` as a copy of another object, as a path, URL, or io.BytesIO.
+
+    Args:
+      img: another object, as a path, URL, or io.BytesIO.
+    """
     if isinstance(img, np.ndarray):
       self._img = img  # init with data
     else:
@@ -25,9 +31,15 @@ class Image():
     self._rgb = len(self._img.shape) == 3
 
   def Save(self, out):
+    """Save image to `out`, which can be a path or an io.BytesIO."""
     imageio.imsave(out, self._img)
 
   def Show(self, interpolation=True):
+    """Show image in pyplot window. Will block.
+
+    Args:
+      interpolation: (default True) If True will interpolate pixels.
+    """
     # https://matplotlib.org/2.0.2/examples/images_contours_and_fields/interpolation_methods.html
     ipol = 'spline36' if interpolation else 'nearest'
     if self._rgb:
@@ -40,6 +52,7 @@ class Image():
   _GREYSCALE_FACTORS = (299, 587, 114)
 
   def Grey(self):
+    """Return a greyscale image object."""
     # https://stackoverflow.com/questions/12201577/how-can-i-convert-an-rgb-image-into-grayscale-in-python
     if not self._rgb:
       return self._img
@@ -52,6 +65,11 @@ class Image():
   _BRIGHT_AREAS_BLUR_INDEX = 15.0  # lower value = more bluring
 
   def _BrightAreas(self):
+    """Compute image bright areas.
+
+    Returns:
+      (greyscale_img, blurred_img, bright_areas_mask, bright_labels, number_of_labels)
+    """
     grey_img = self.Grey() if self._rgb else self._img
     blur_sigma = round(max(self._img.shape) / Image._BRIGHT_AREAS_BLUR_INDEX)
     blur_img = ndimage.gaussian_filter(grey_img, sigma=blur_sigma)
@@ -91,6 +109,7 @@ class Image():
 
 
 def main():
+  """Execute main method."""
   args = sys.argv[1:]
   if args:
     img = Image(args[-1])
