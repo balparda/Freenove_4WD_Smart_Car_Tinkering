@@ -18,15 +18,9 @@ print(ph)
 print(sn)
 print(ir)
 
-with lib.Cam() as cam:#, BB():
+with BB():
 
-  pdb.set_trace()
-  img = cam.Greyscale()
-  # continue: https://scipy-lectures.org/advanced/image_processing/
-
-
-  #nk.Demo()
-
+  nk.Demo()
   raise
 
   nk.Set({'H': 0, 'V': 0})

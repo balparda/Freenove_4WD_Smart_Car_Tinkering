@@ -2,11 +2,10 @@
 """Balparda's car API."""
 
 import io
-import numpy
-#import pdb
+# import pdb
 import time
 
-from PIL import Image
+# from PIL import Image
 
 import ADC
 import Buzzer
@@ -16,6 +15,8 @@ import Motor
 import picamera
 import servo
 import Ultrasonic
+
+import balparda_imaging as imaging
 
 
 class Battery():
@@ -52,7 +53,8 @@ class Photoresistor():
 
   def Read(self):
     """Return left & right (left_float, right_float) photoresistor reading."""
-    return (self._a.recvADC(Photoresistor._PHOTO_INDEX[0]), self._a.recvADC(Photoresistor._PHOTO_INDEX[1]))
+    return (self._a.recvADC(Photoresistor._PHOTO_INDEX[0]),
+            self._a.recvADC(Photoresistor._PHOTO_INDEX[1]))
 
   def __str__(self):
     """Print human readable left & right photoresistor reading."""
@@ -72,21 +74,21 @@ class Engine():
     """Create object."""
     self._m = Motor.Motor()
 
-  def Move(self, a, b, c, d, tm):
+  def Move(self, left_upper, left_lower, right_upper, right_lower, tm):
     """Move car wheels for a certain time. Will block.
 
     Args:
-      a: TODO!!
-      b:
-      c:
-      d:
-      tm:
+      left_upper: Speed to apply to upper left wheel, int, 1 to 10.
+      left_lower: Speed to apply to lower left wheel, int, 1 to 10.
+      right_upper: Speed to apply to upper right wheel, int, 1 to 10.
+      right_lower: Speed to apply to lower right wheel, int, 1 to 10.
+      tm: Time to apply motors, in seconds.
     """
     try:
-      self._m.setMotorModel(round(Engine._GAIN * a),
-                            round(Engine._GAIN * b),
-                            round(Engine._GAIN * c),
-                            round(Engine._GAIN * d))
+      self._m.setMotorModel(round(Engine._GAIN * left_upper),
+                            round(Engine._GAIN * left_lower),
+                            round(Engine._GAIN * right_upper),
+                            round(Engine._GAIN * right_lower))
       time.sleep(tm)
     finally:
       self._m.setMotorModel(0, 0, 0, 0)
@@ -187,6 +189,7 @@ class Neck():
     self._o = offset
     if not self._o:
       raise Exception('Empty offset')
+    self.Zero()
 
   def Set(self, servo_dict):
     """Set neck to a position.
@@ -297,16 +300,21 @@ class Cam():
     stream = io.BytesIO()
     self._c.capture(stream, format='bmp')
     stream.seek(0)
-    img = Image.open(stream)
-    stream.seek(0)
-    return (img, stream.read())
+    data = stream.read()
+    img = imaging.Image(data)
+    return (img, data)
 
-  def Greyscale(self):
-    """Take a single greyscale image.
+  def Stream(self):
+    """Stream images.
 
-    Returns:
-      image_object
+    Yields:
+      (image_object, image_bytes)
     """
-    img = self.Click()[0]
-    pix = numpy.array(img)
-    return numpy.round((pix[:,:,0] + pix[:,:,1] + pix[:,:,2]) / 3.0).astype(numpy.uint8)
+    stream = io.BytesIO()
+    for foo in self._c.capture_continuous(stream, format='bmp'):
+      # Truncate the stream to the current position (in case prior iterations output a longer image)
+      stream.truncate()
+      stream.seek(0)
+      data = stream.read()
+      img = imaging.Image(data)
+      yield (img, data)

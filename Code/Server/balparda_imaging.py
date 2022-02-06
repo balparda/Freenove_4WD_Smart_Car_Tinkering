@@ -1,15 +1,15 @@
 #!/usr/bin/python3 -O
 """Imaging module."""
 
-#import pdb
+# import pdb
 import sys
 
 # https://scipy-lectures.org/advanced/image_processing/
 import numpy as np
-#import scipy  # https://docs.scipy.org/doc/
-from scipy import misc
+# import scipy  # https://docs.scipy.org/doc/
+# from scipy import misc
 from scipy import ndimage  # https://docs.scipy.org/doc/scipy/reference/ndimage.html
-                           # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.html
+                         # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.html
 from matplotlib import pyplot as plt
 from matplotlib import patches
 import imageio  # https://imageio.readthedocs.io/en/stable/
@@ -56,11 +56,10 @@ class Image():
     # https://stackoverflow.com/questions/12201577/how-can-i-convert-an-rgb-image-into-grayscale-in-python
     if not self._rgb:
       return self._img
-    added_img = ((Image._GREYSCALE_FACTORS[0] * self._img[:, :, 0].astype('int'))
-                 + (Image._GREYSCALE_FACTORS[1]
-                    * self._img[:, :, 1].astype('int'))
-                 + (Image._GREYSCALE_FACTORS[2] * self._img[:, :, 2].astype('int')))
-    return np.round(added_img / float(sum(Image._GREYSCALE_FACTORS))).astype('uint8')
+    added_img = ((Image._GREYSCALE_FACTORS[0] * self._img[:, :, 0].astype(np.int))
+                 + (Image._GREYSCALE_FACTORS[1] * self._img[:, :, 1].astype(np.int))
+                 + (Image._GREYSCALE_FACTORS[2] * self._img[:, :, 2].astype(np.int)))
+    return np.round(added_img / float(sum(Image._GREYSCALE_FACTORS))).astype(np.uint8)
 
   _BRIGHT_AREAS_BLUR_INDEX = 15.0  # lower value = more bluring
 
@@ -100,31 +99,7 @@ class Image():
     if plot:
       fig, ax = plt.subplots(2)
       ax[0].imshow(self._img)
-      ax[1].imshow(bright_areas_mask.astype(
-        np.uint8) * grey_img, cmap=plt.cm.gray)
-      ax[1].add_patch(patches.Circle(com, radius=round(
-        max(self._img.shape) / 100.0), color='red'))
+      ax[1].imshow(bright_areas_mask.astype(np.uint8) * grey_img, cmap=plt.cm.gray)
+      ax[1].add_patch(patches.Circle(com, radius=round(max(self._img.shape) / 100.0), color='red'))
       plt.show()
     return com
-
-
-def main():
-  """Execute main method."""
-  args = sys.argv[1:]
-  if args:
-    img = Image(args[-1])
-  else:
-    img = Image(misc.face())
-  com = img.BrightnessFocus(plot=True)
-  print(com)
-
-
-main()
-
-
-#plt.imshow(img._img, cmap=plt.cm.gray)
-#plt.annotate('x', xy=com, arrowprops={'arrowstyle': '->'})
-#plt.add_patch(patches.Circle(com, radius=round(max(self._img.shape) / 50.0), color='red'))
-#plt.show()
-
-#img.Show()
