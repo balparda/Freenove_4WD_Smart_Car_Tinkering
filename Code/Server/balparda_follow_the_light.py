@@ -1,6 +1,7 @@
 #!/usr/bin/python3 -O
 """Follow-the-Light automaton program for the car."""
 
+import multiprocessing
 # import pdb
 import sys
 import time
@@ -13,11 +14,16 @@ import balparda_lib as lib
 def main():
   """Execute main method."""
   # pdb.set_trace()
-  with lib.Cam() as cam:
-    for img in cam.Stream():
-      print(time.time())
+  q = multiprocessing.Queue()
+  p = multiprocessing.Process(target=lib.QueueImages, args=(q,))
+  p.start()
+  for _ in range(15):
+    img = q.get()
+    com = img.BrightnessFocus()
+    print('%0.2f : %r' % (time.time(), com))
+  p.join()
 
-  break
+  return
 
   args = sys.argv[1:]
   if args:

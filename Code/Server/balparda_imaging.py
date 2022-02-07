@@ -9,7 +9,7 @@ import numpy as np
 # import scipy  # https://docs.scipy.org/doc/
 # from scipy import misc
 from scipy import ndimage  # https://docs.scipy.org/doc/scipy/reference/ndimage.html
-                         # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.html
+                           # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.html
 from matplotlib import pyplot as plt
 from matplotlib import patches
 import imageio  # https://imageio.readthedocs.io/en/stable/
@@ -90,11 +90,9 @@ class Image():
     """
     grey_img, blur_img, bright_areas_mask, bright_labels, nlabels = self._BrightAreas()
     weight_img = blur_img if use_masses else bright_areas_mask
-    label_weights = ndimage.sum_labels(
-      weight_img, labels=bright_labels, index=range(nlabels + 1))
+    label_weights = ndimage.sum(weight_img, labels=bright_labels, index=range(nlabels + 1))
     label_weights[0] = 0  # label 0 does not count here
-    com = ndimage.center_of_mass(
-      weight_img, labels=bright_labels, index=np.argmax(label_weights))
+    com = ndimage.center_of_mass(weight_img, labels=bright_labels, index=np.argmax(label_weights))
     com = (com[1], com[0])  # remember to invert axes
     if plot:
       fig, ax = plt.subplots(2)

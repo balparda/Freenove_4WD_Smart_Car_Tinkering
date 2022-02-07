@@ -248,7 +248,8 @@ class Infra():
   def __str__(self):
     """Print human readable infra-red left, middle, and right reading."""
     l, m, r = self.Read()
-    return "Infrared: [ %s - %s - %s ]" % ('LL' if l else '..', 'MM' if m else '..', 'RR' if r else '..')
+    return "Infrared: [ %s - %s - %s ]" % (
+        'LL' if l else '..', 'MM' if m else '..', 'RR' if r else '..')
 
   def __repr__(self):
     """Representation of (left_bool, middle_bool, right_bool) battery reading."""
@@ -318,3 +319,16 @@ class Cam():
       data = stream.read()
       img = imaging.Image(data)
       yield (img, data)
+
+
+def QueueImages(queue):
+  """Define a subprocess for streaming images continuously.
+
+  Expects to be the entry point for a multiprocessing.Process.
+
+  Args:
+    queue: a multiprocessing.Queue object
+  """
+  with Cam() as cam:
+    for img, _ in cam.Stream():
+      queue.put(img)
