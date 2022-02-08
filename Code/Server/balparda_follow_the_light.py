@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -O
 """Follow-the-Light automaton program for the car."""
 
+_MOCK = True
+
 import multiprocessing
 import pdb
 import sys
@@ -10,6 +12,10 @@ from scipy import misc
 
 import balparda_imaging as imaging
 import balparda_lib as lib
+if not _MOCK:
+  import balparda_car as car
+else:
+  car = None
 
 
 _N_IMAGES_TO_TIME = 3
@@ -31,7 +37,7 @@ def ImageQueue():
   """Time one process capturing images."""
   img_queue = multiprocessing.Queue()
   img_stop = multiprocessing.Value('b', 0, lock=True)
-  img_process = multiprocessing.Process(target=lib.QueueImages, args=(img_queue, img_stop))
+  img_process = multiprocessing.Process(target=car.QueueImages, args=(img_queue, img_stop))
   img_process.start()
   try:
     for _ in range(_N_IMAGES_TO_TIME):
@@ -49,7 +55,7 @@ def ImageAndProcessingQueue(mock=False):
   img_queue = multiprocessing.Queue()
   img_stop = multiprocessing.Value('b', 0, lock=True)
   img_process = multiprocessing.Process(
-      target=imaging.MockQueueImages if mock else lib.QueueImages,
+      target=imaging.MockQueueImages if mock else car.QueueImages,
       name='image-generator',
       args=(img_queue, img_stop, 'testimg/capture-001-*.jpg', 1) if mock else (img_queue, img_stop),
       daemon=True)
@@ -83,7 +89,7 @@ def main():
   """Execute main method."""
   #DirectCapture()
   #ImageQueue()
-  ImageAndProcessingQueue(mock=True)
+  ImageAndProcessingQueue(mock=_MOCK)
   return
 
   args = sys.argv[1:]
