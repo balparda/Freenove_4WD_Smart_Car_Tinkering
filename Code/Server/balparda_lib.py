@@ -19,6 +19,31 @@ import Ultrasonic
 import balparda_imaging as imaging
 
 
+class Timer():
+  """Time execution."""
+
+  def __init__(self):
+    """Create context object."""
+    self._t = None
+
+  def __enter__(self):
+    """Enter context: get start time."""
+    self._t = time.time()
+    return self
+
+  def __exit__(self, a, b, c):
+    """Leave context: stop timer by printing value."""
+    print('Execution time: %0.2f seconds' % (time.time() - self._t))
+
+
+def Timed(func):
+  """Makes any call print its execution time if used as a decorator."""
+  def _wrapped_call(*args, **kwargs):
+    with Timer():
+      return func(*args, **kwargs)
+  return _wrapped_call
+
+
 class Battery():
   """Car battery functionality wrapper."""
 
@@ -321,14 +346,22 @@ class Cam():
       yield (img, data)
 
 
-def QueueImages(queue):
+def QueueImages(queue, stop_flag):
   """Define a subprocess for streaming images continuously.
 
-  Expects to be the entry point for a multiprocessing.Process.
+  Expects to be the entry point for a multiprocessing.Process() call. Will write to `queue`
+  continuously until `stop_flag` becomes !=0 (True).
 
   Args:
-    queue: a multiprocessing.Queue object
+    queue: a multiprocessing.Queue object that will receive (n, img) tuples, where n is the
+        image counter and img is the Nth imaging.Image object
+    stop_flag: a multiprocessing.Value('b', 0, lock=True) byte ('b' signed char) object that
+        should start 0 (False) and become 1 (True) when the process should end.
   """
   with Cam() as cam:
-    for img, _ in cam.Stream():
-      queue.put(img)
+    for n, (img, _) in enumerate(cam.Stream()):
+      if stop_flag.value:
+        break
+      print('IMG: PUT %d' % n)
+      queue.put((n, img))
+  print('IMG: END')
