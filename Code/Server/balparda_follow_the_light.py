@@ -44,14 +44,14 @@ def ImageQueue():
 
 
 @lib.Timed
-def ImageAndProcessingQueue():
+def ImageAndProcessingQueue(mock=False):
   """Time separate imaging and process processes."""
   img_queue = multiprocessing.Queue()
   img_stop = multiprocessing.Value('b', 0, lock=True)
   img_process = multiprocessing.Process(
-      target=lib.QueueImages,
+      target=imaging.MockQueueImages if mock else lib.QueueImages,
       name='image-generator',
-      args=(img_queue, img_stop),
+      args=(img_queue, img_stop, 'testimg/capture-001-*.jpg', 1) if mock else (img_queue, img_stop),
       daemon=True)
   brightness_queue = multiprocessing.Queue()
   brightness_stop = multiprocessing.Value('b', 0, lock=True)
@@ -83,7 +83,7 @@ def main():
   """Execute main method."""
   #DirectCapture()
   #ImageQueue()
-  ImageAndProcessingQueue()
+  ImageAndProcessingQueue(mock=True)
   return
 
   args = sys.argv[1:]

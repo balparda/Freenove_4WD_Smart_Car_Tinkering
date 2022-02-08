@@ -1,8 +1,11 @@
 #!/usr/bin/python3 -O
 """Imaging module."""
 
+import glob
+import itertools
 # import pdb
 import sys
+import time
 
 # https://scipy-lectures.org/advanced/image_processing/
 import numpy as np
@@ -101,3 +104,28 @@ class Image():
       ax[1].add_patch(patches.Circle(com, radius=round(max(self._img.shape) / 100.0), color='red'))
       plt.show()
     return com
+
+
+def MockQueueImages(queue, stop_flag, mock_images_glob, sleep_time):
+  """Define a subprocess for streaming mock images continuously, mocking balparda_lib.QueueImages().
+
+  Expects to be the entry point for a multiprocessing.Process() call. Will write to `queue`
+  continuously until `stop_flag` becomes !=0 (True). The written images will be read from
+  `mock_images_glob` and retuned in a cycle.
+
+  Args:
+    queue: a multiprocessing.Queue object that will receive (n, img) tuples, where n is the
+        image counter and img is the Nth imaging.Image object
+    stop_flag: a multiprocessing.Value('b', 0, lock=True) byte ('b' signed char) object that
+        should start 0 (False) and become 1 (True) when the process should end.
+    mock_images_glob: a glob string, like 'path/somefiles*.jpg' for example
+    sleep_time: seconds to sleep between images
+  """
+  images = [Image(p) for p in sorted(glob(mock_images_glob))]
+  print('%d mock images loaded' % len(images))
+  for n, img in enumerate(itertools.cyle(images)):
+    if stop_flag.value:
+      break
+    print('IMG: PUT %d' % n)
+    queue.put((n, img))
+  print('IMG: END')
