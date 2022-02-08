@@ -337,13 +337,13 @@ class Cam():
       (image_object, image_bytes)
     """
     stream = io.BytesIO()
-    for foo in self._c.capture_continuous(stream, format='bmp'):
-      # Truncate the stream to the current position (in case prior iterations output a longer image)
-      stream.truncate()
-      stream.seek(0)
+    for _ in self._c.capture_continuous(stream, format='bmp'):
+      stream.truncate()  # in case prior iterations output a longer image (unexpected!)
+      stream.seek(0)     # rewind to start reading
       data = stream.read()
       img = imaging.Image(data)
       yield (img, data)
+      stream.seek(0)  # if we don't rewind again caoture_continuous() will write at the end
 
 
 def QueueImages(queue, stop_flag):
