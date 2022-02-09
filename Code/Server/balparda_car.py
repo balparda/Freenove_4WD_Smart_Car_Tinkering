@@ -87,8 +87,6 @@ class Engine():
     """
     left_upper, left_lower = int(left_upper), int(left_lower)
     right_upper, right_lower = int(right_upper), int(right_lower)
-    logging.info('Move %r for %0.2f seconds',
-                 (left_upper, left_lower, right_upper, right_lower), tm)
     try:
       self._m.setMotorModel(round(Engine._GAIN * left_upper),
                             round(Engine._GAIN * left_lower),
@@ -100,6 +98,8 @@ class Engine():
 
   def Straight(self, speed, tm):
     """Move car ahead at `speed` for `tm` seconds. Will block."""
+    speed = int(speed)
+    logging.info('Move at speed %d for %0.2f seconds', speed, tm)
     self.Move(speed, speed, speed, speed, tm)
 
   def Turn(self, angle):
@@ -107,7 +107,8 @@ class Engine():
 
     Works best when angle is +90.0 or -90.0 as car is actually non-linear.
     """
-    logging.info('Turn %0.2f degrees', angle)
+    angle = int(angle)
+    logging.info('Turn %d degrees', angle)
     tm = abs(angle * (.7/90))
     if angle > 0:
       self.Move(5, 5, -4, -4, tm)
@@ -169,7 +170,7 @@ class Sonar():
     self._s = Ultrasonic.Ultrasonic()
 
   def Read(self):
-    """Return float distance reading."""
+    """Return float distance reading, in meters."""
     return self._s.get_distance() / 100.0
 
   def __str__(self):
@@ -205,7 +206,7 @@ class Neck():
     """Set neck to a position.
 
     Args:
-      servo_dict: like {'H': horizontal_anlge, 'V': vertical_angle}
+      servo_dict: like {'H': horizontal_angle, 'V': vertical_angle}
     """
     logging.info('Neck to position %r', servo_dict)
     for t, a in servo_dict.items():
@@ -357,6 +358,6 @@ def QueueImages(queue, stop_flag):
     for n, (img, _) in enumerate(cam.Stream()):
       if stop_flag.value:
         break
-      logging.info('Capture image #%04d', n)
+      logging.debug('Capture image #%04d', n)
       queue.put((n, img))
   logging.info('Image capture pipeline stopped')

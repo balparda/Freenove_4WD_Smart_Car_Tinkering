@@ -126,7 +126,7 @@ def MockQueueImages(queue, stop_flag, mock_images_glob, sleep_time):
   for n, img in enumerate(itertools.cycle(images)):
     if stop_flag.value:
       break
-    logging.info('Mock image #%04d', n)
+    logging.debug('Mock image #%04d', n)
     queue.put((n, img))
     time.sleep(sleep_time)
   logging.info('Image MOCK pipeline stopped')

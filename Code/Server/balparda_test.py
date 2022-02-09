@@ -4,14 +4,14 @@
 import pdb
 import time
 
-import balparda_lib as lib
+import balparda_car as car
 from luna_lib import *
 
-bt = lib.Battery()
-ph = lib.Photoresistor()
-sn = lib.Sonar()
-nk = lib.Neck(offset={'H': 6.0, 'V': -23.0})
-ir = lib.Infra()
+bt = car.Battery()
+ph = car.Photoresistor()
+sn = car.Sonar()
+nk = car.Neck(offset={'H': 6.0, 'V': -23.0})
+ir = car.Infra()
 
 print(bt)
 print(ph)

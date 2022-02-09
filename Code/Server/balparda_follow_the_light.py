@@ -16,7 +16,7 @@ else:
   car = None
 
 
-def MainPipelines(mock=False):
+def _MainPipelines(mock=False):
   """Will start image pipelines pipe them into decision pipeline.
 
   Args:
@@ -49,7 +49,7 @@ def MainPipelines(mock=False):
       name='movement-pipeline',
       args=(brightness_queue,  # feed from brightness queue
             None,              # end of pipeline, so don't feed a new queue
-            lambda i: i,  # TODO!!
+            _MovementDecisionMaker(mock=mock),
             movement_stop),
       daemon=True)
   # start
@@ -60,7 +60,7 @@ def MainPipelines(mock=False):
   try:
     # go to sleep while the pipeline does the job or while we wait for a Ctrl-C
     while True:
-      time.sleep(0.5)
+      time.sleep(0.3)
   finally:
     # signal stop and wait for queues
     img_stop.value = 1
@@ -74,11 +74,56 @@ def MainPipelines(mock=False):
     movement_process.join()
 
 
+def _MovementDecisionMaker(mock=False):
+  """Create a decision maker incorporating either the real or a mock car."""
+
+  class _MockEngine():  # mock car.Engine
+
+    def Straight(self, speed, tm):
+      logging.info('Move at speed %d for %0.2f seconds', speed, tm)
+      time.sleep(tm)
+
+    def Turn(self, angle):
+      logging.info('Turn %0.2f degrees', angle)
+      time.sleep(int(abs(angle * (.7/90))))
+
+  class _MockNeck():  # mock car.Neck
+
+    def Zero(self):
+      time.sleep(0.2)
+
+    def Set(self, servo_dict):
+      logging.info('Neck to position %r', servo_dict)
+      time.sleep(0.2)
+
+  class _MockSonar():  # mock car.Sonar
+
+    def Read(self):
+      time.sleep(0.1)
+      return 1.0
+
+  engine = _MockEngine() if mock else car.Engine()
+  neck = _MockNeck() if mock else car.Neck(offset={'H': 6.0, 'V': -23.0})
+  sonar = _MockSonar() if mock else car.Sonar()
+
+  def _MovementDecision(input):
+    """Take a "step" movement decisions based on a camera and sonar reading."""
+    # TODO: maybe move sonar readings into a separate pipeline?
+    num_img, img, (x_focus, y_focus) = input
+    x_focus -= 400
+    y_focus -= 300
+    dist = sonar.Read()
+    logging.info('Got foci for image #%04d: (%d, %d) @ %0.2fm', num_img, x_focus, y_focus, dist)
+    neck.Set({'H': x_focus / 10.0, 'V': y_focus / 10.0})
+
+  return _MovementDecision
+
+
 def main():
   """Execute main method."""
   logging.info('Start')
   try:
-    MainPipelines(mock=_MOCK)
+    _MainPipelines(mock=_MOCK)
   finally:
     logging.info('End')
 

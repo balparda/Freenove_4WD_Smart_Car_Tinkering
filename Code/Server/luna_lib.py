@@ -2,10 +2,10 @@
 """Module will simplify car concepts to its bare minimal call, for beginner understanding."""
 
 import time
-import balparda_lib as lib
+import balparda_car as car
 
 
-_ENG = lib.Engine()
+_ENG = car.Engine()
 
 
 class BB():  # bi-bi, barulho, luz
@@ -13,8 +13,8 @@ class BB():  # bi-bi, barulho, luz
 
   def __init__(self):
     """Create object."""
-    self._n = lib.Noise()
-    self._l = lib.Light({n: (255, 0, 255) for n in range(8)})
+    self._n = car.Noise()
+    self._l = car.Light({n: (255, 0, 255) for n in range(8)})
 
   def __enter__(self):
     """Start noise and light."""

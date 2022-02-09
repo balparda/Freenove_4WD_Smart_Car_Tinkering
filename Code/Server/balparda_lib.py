@@ -62,7 +62,7 @@ class Timer():
 
   def __exit__(self, a, b, c):
     """Leave context: stop timer by printing value."""
-    logging.info('Execution time: %0.2f seconds', time.time() - self._t)
+    logging.warning('Execution time: %0.2f seconds', time.time() - self._t)
 
 
 def Timed(func):
@@ -108,7 +108,7 @@ def UpToDateProcessingPipeline(input_queue, output_queue, process_call, stop_fla
     while sz:
       # we are going to asssume the queue has *at least* sz elements; first discard extra ones
       if sz > 1:
-        logging.info('Discarding %d tasks', sz - 1)
+        logging.debug('Discarding %d tasks', sz - 1)
         for _ in range(sz - 1):
           input_queue.get()  # discard value
           input_queue.task_done()
@@ -117,7 +117,7 @@ def UpToDateProcessingPipeline(input_queue, output_queue, process_call, stop_fla
       sz = input_queue.qsize()
       if sz:
         # this probably means we had elements added while we waited; mark done and try again
-        logging.info('Discarding 1 (tentative) task')
+        logging.debug('Discarding 1 (tentative) task')
         input_queue.task_done()  # if we know the loop will try again, we have to discard
     return obj
 
@@ -132,7 +132,7 @@ def UpToDateProcessingPipeline(input_queue, output_queue, process_call, stop_fla
       try:
         if stop_flag.value:  # we might have gotten a stop flag during get()s
           break
-        logging.info('Task #%04d is processing', n)
+        logging.debug('Task #%04d is processing', n)
         result = process_call(task)
         if output_queue is not None:
           output_queue.put(result)
@@ -142,7 +142,7 @@ def UpToDateProcessingPipeline(input_queue, output_queue, process_call, stop_fla
   finally:
     # we need to finish consuming the queue now
     if input_queue.qsize():
-      logging.info('Discarding %d remaining tasks', input_queue.qsize())
+      logging.debug('Discarding %d remaining tasks', input_queue.qsize())
     while input_queue.qsize():
       input_queue.get()  # discard value
       input_queue.task_done()
