@@ -2,25 +2,48 @@
 """Balparda's utils lib."""
 
 import logging
+import multiprocessing
 import pdb
 import time
 import sys
 
 
-_LOG_FORMAT = (
-    '%(asctime)s.%(msecs)03d%(levelname)08s[%(funcName)s]: %(message)s',  # global format
+_LOG_FORMATS = (
+    '%(asctime)s.%(msecs)03d%(levelname)08s[%(funcName)s]: %(message)s',  # without process name
+    '%(asctime)s.%(msecs)03d%(levelname)08s[%(processName)s.%(funcName)s]: %(message)s',  # with prc
     '%Y%m%d.%H:%M:%S',  # date format
 )
 # example '20220209.14:16:47.667    INFO[SomeMethodName]: Some message'
 
 
-def StartStdErrLogging(level):
-  """Setup logging to stderr."""
+def StartMultiprocessing(method='fork'):
+  """Start multiprocessing by setting up method.
+
+  Should be called only once like  `if __name__ == '__main__': lib.StartMultiprocessing(); main()`.
+
+  Args:
+    method: (default 'fork') Method to use
+  """
+  multiprocessing.set_start_method(method)
+
+
+def StartStdErrLogging(level=logging.INFO, logprocess=False):
+  """Start logging to stderr.
+
+  Should be called only once like  `if __name__ == '__main__': lib.StartStdErrLogging(); main()`.
+
+  Args:
+    level: (default logging.INFO) logging level to use
+    logprocess: (default False) If True will add process names to log strings (as in the process
+        `multiprocessing.Process(name=[somename])` call)
+  """
   logger = logging.getLogger()
   logger.setLevel(level)
   handler = logging.StreamHandler(sys.stdout)
   handler.setLevel(level)
-  formatter = logging.Formatter(fmt=_LOG_FORMAT[0], datefmt=_LOG_FORMAT[1])
+  formatter = logging.Formatter(
+      fmt=_LOG_FORMATS[1] if logprocess else _LOG_FORMATS[0],
+      datefmt=_LOG_FORMATS[2])
   handler.setFormatter(formatter)
   logger.addHandler(handler)
 

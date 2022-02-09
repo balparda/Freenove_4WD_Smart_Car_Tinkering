@@ -19,7 +19,7 @@ else:
   car = None
 
 
-_N_IMAGES_TO_TIME = 3
+_N_IMAGES_TO_TIME = 30
 
 
 @lib.Timed
@@ -125,6 +125,6 @@ def main():
 
 
 if __name__ == '__main__':
-  multiprocessing.set_start_method('fork')
-  lib.StartStdErrLogging(logging.INFO)
+  lib.StartMultiprocessing()
+  lib.StartStdErrLogging()
   main()
