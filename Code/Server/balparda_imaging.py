@@ -3,7 +3,7 @@
 
 import glob
 import itertools
-# import pdb
+import pdb
 import sys
 import time
 
@@ -121,11 +121,13 @@ def MockQueueImages(queue, stop_flag, mock_images_glob, sleep_time):
     mock_images_glob: a glob string, like 'path/somefiles*.jpg' for example
     sleep_time: seconds to sleep between images
   """
-  images = [Image(p) for p in sorted(glob(mock_images_glob))]
+  time.sleep(sleep_time)
+  images = [Image(p) for p in sorted(glob.glob(mock_images_glob))]
   print('%d mock images loaded' % len(images))
-  for n, img in enumerate(itertools.cyle(images)):
+  for n, img in enumerate(itertools.cycle(images)):
     if stop_flag.value:
       break
     print('IMG: PUT %d' % n)
     queue.put((n, img))
+    time.sleep(sleep_time)
   print('IMG: END')

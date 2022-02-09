@@ -62,7 +62,7 @@ def ImageAndProcessingQueue(mock=False):
   brightness_queue = multiprocessing.Queue()
   brightness_stop = multiprocessing.Value('b', 0, lock=True)
   brightness_process = multiprocessing.Process(
-      target=imaging.ProcessingPipeline,
+      target=lib.UpToDateProcessingPipeline,
       name='image-processing',
       args=(img_queue,
             brightness_queue,
