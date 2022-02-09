@@ -16,6 +16,9 @@ else:
   car = None
 
 
+_ANGLE_OF_VIEW = (53.5, 41.41)
+
+
 def _MainPipelines(mock=False):
   """Will start image pipelines pipe them into decision pipeline.
 
@@ -107,14 +110,14 @@ def _MovementDecisionMaker(mock=False):
   sonar = _MockSonar() if mock else car.Sonar()
 
   def _MovementDecision(input):
-    """Take a "step" movement decisions based on a camera and sonar reading."""
+    """Take a "step" movement decision based on a camera and sonar reading."""
     # TODO: maybe move sonar readings into a separate pipeline?
     num_img, img, (x_focus, y_focus) = input
-    x_focus -= 400
-    y_focus -= 300
+    x_angle, y_angle = img.PointToAngle(x_focus, y_focus, _ANGLE_OF_VIEW[0], _ANGLE_OF_VIEW[1])
+    x_angle, y_angle = int(x_angle), int(y_angle)
     dist = sonar.Read()
-    logging.info('Got foci for image #%04d: (%d, %d) @ %0.2fm', num_img, x_focus, y_focus, dist)
-    neck.Set({'H': x_focus / 10.0, 'V': y_focus / 10.0})
+    logging.info('Got foci for image #%04d: (%d, %d) @ %0.2fm', num_img, x_angle, y_angle, dist)
+    neck.Set({'H': x_angle, 'V': y_angle})
 
   return _MovementDecision
 

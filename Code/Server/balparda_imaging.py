@@ -4,6 +4,7 @@
 import glob
 import itertools
 import logging
+import math
 # import pdb
 import time
 
@@ -14,6 +15,19 @@ from scipy import ndimage  # https://docs.scipy.org/doc/
 from matplotlib import pyplot as plt
 from matplotlib import patches
 import imageio  # https://imageio.readthedocs.io/en/stable/
+
+
+def CameraAngleOfView(focal_length, sensor_size):
+  """Camera angle of view.
+
+  Args:
+    focal_length: Focal lenght, in mm (actually any consistent length unit will work)
+    sensor_size: Sensor size, in mm (actually any consistent length unit will work)
+
+  Returns:
+    angle of view, in degrees
+  """
+  return math.degrees(2.0 * math.atan(sensor_size / (2.0 * focal_length)))
 
 
 class Image():
@@ -103,6 +117,26 @@ class Image():
       # ax[1].annotate('x', xy=com, arrowprops={'arrowstyle': '->'})
       plt.show()
     return com
+
+  def PointToAngle(self, x, y, x_angle_view, y_angle_view):
+    """Convert image point (x,y) to an angle in the real world based on x/y angle of view.
+
+    Args:
+      x: x dimension (int)
+      y: y dimension (int)
+      x_angle_view: horizontal angle of view (degrees)
+      y_angle_view: vertical angle of view (degrees)
+
+    Returns:
+      (x_angle, y_angle) the real world angle corresponding to point (x,y) where (0, 0) is the
+      center of the image
+    """
+    y_dim, x_dim = self._img.shape[:2]
+    x_px_per_degrees = x_dim / float(x_angle_view)
+    y_px_per_degrees = y_dim / float(y_angle_view)
+    x -= x_dim / 2
+    y -= y_dim / 2
+    return (x / x_px_per_degrees, y / y_px_per_degrees)
 
 
 def MockQueueImages(queue, stop_flag, mock_images_glob, sleep_time):

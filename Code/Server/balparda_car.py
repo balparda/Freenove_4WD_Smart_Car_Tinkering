@@ -281,6 +281,9 @@ class Cam():
   _DEFAULT_RESOLUTION = (800, 600)
   _DEFAULT_FRAMERATE = 10
   _SLEEP_TO_INIT = 1.5
+  _FOCAL_LENGTH = 3.60  # mm (https://www.raspberrypi.com/documentation/accessories/camera.html)
+  _SENSOR_SIZE = (3.76, 2.74)     # mm
+  _ANGLE_OF_VIEW = (53.50, 41.41)  # degrees
 
   def __init__(self, resolution=_DEFAULT_RESOLUTION, framerate=_DEFAULT_FRAMERATE):
     """Create context object.
