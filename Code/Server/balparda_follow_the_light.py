@@ -3,6 +3,7 @@
 
 _MOCK = True
 
+import logging
 import multiprocessing
 import pdb
 import sys
@@ -27,7 +28,7 @@ def DirectCapture():
   with lib.Cam() as cam:
     for n, (img, _) in enumerate(cam.Stream()):
       com = img.BrightnessFocus()
-      print('%0.2f : %r' % (time.time(), com))
+      logging.info('%0.2f : %r', time.time(), com)
       if n >= (_N_IMAGES_TO_TIME - 1):
         break
 
@@ -43,7 +44,7 @@ def ImageQueue():
     for _ in range(_N_IMAGES_TO_TIME):
       img = img_queue.get()
       com = img.BrightnessFocus()
-      print('%0.2f : %r' % (time.time(), com))
+      logging.info('%0.2f : %r', time.time(), com)
   finally:
     img_stop.value = 1
     img_process.join()
@@ -52,44 +53,61 @@ def ImageQueue():
 @lib.Timed
 def ImageAndProcessingQueue(mock=False):
   """Time separate imaging and process processes."""
-  img_queue = multiprocessing.Queue()
+  # create queues and semaphores
+  img_queue = multiprocessing.JoinableQueue()
   img_stop = multiprocessing.Value('b', 0, lock=True)
+  brightness_queue = multiprocessing.JoinableQueue()
+  brightness_stop = multiprocessing.Value('b', 0, lock=True)
+  # setup image process (real or mock)
   img_process = multiprocessing.Process(
       target=imaging.MockQueueImages if mock else car.QueueImages,
-      name='image-generator',
-      args=(img_queue, img_stop, 'testimg/capture-001-*.jpg', 1) if mock else (img_queue, img_stop),
+      name='image-pipeline',
+      args=(img_queue, img_stop, 'testimg/capture-001-*.jpg', .7) if mock else (img_queue, img_stop),
       daemon=True)
-  brightness_queue = multiprocessing.Queue()
-  brightness_stop = multiprocessing.Value('b', 0, lock=True)
+  # setup processing pipeline (feeding real or mock images)
   brightness_process = multiprocessing.Process(
       target=lib.UpToDateProcessingPipeline,
-      name='image-processing',
+      name='processing-pipeline',
       args=(img_queue,
             brightness_queue,
             lambda i: (i[0], i[1], i[1].BrightnessFocus()),
             brightness_stop),
       daemon=True)
+  # start
+  logging.info('Starting pipeline processes')
   img_process.start()
   brightness_process.start()
   try:
+    # process the items
     for n in range(_N_IMAGES_TO_TIME):
-      print('MAIN: GET %d' % n)
       n_img, img, focus = brightness_queue.get()
-      print('%d - %d - %0.2f : %r' % (n, n_img, time.time(), focus))
+      try:
+        logging.info('Got image+focus %d (#%04d) ==>> focus is %r', n, n_img, focus)
+      finally:
+        brightness_queue.task_done()
   finally:
+    # signal stop and wait for queues
     img_stop.value = 1
     brightness_stop.value = 1
-    print('MAIN: PP JOIN')
-    brightness_process.join()
-    print('MAIN: IMG JOIN')
+    logging.info('Waiting for image pipeline')
     img_process.join()
+    logging.info('Waiting for processing pipeline')
+    brightness_process.join()
+    # we need to finish consuming brightness_queue now
+    if brightness_queue.qsize():
+      logging.info('Discarding %d remaining incoming image foci', brightness_queue.qsize())
+    while brightness_queue.qsize():
+      brightness_queue.get()  # discard value
+      brightness_queue.task_done()
 
 
 def main():
   """Execute main method."""
+  logging.info('Start')
   #DirectCapture()
   #ImageQueue()
   ImageAndProcessingQueue(mock=_MOCK)
+  logging.info('End')
   return
 
   args = sys.argv[1:]
@@ -98,7 +116,7 @@ def main():
   else:
     img = Image(misc.face())
   com = img.BrightnessFocus(plot=True)
-  print(com)
+  logging.info(repr(com))
   # plt.imshow(img._img, cmap=plt.cm.gray)
   # plt.annotate('x', xy=com, arrowprops={'arrowstyle': '->'})
   # plt.add_patch(patches.Circle(com, radius=round(max(self._img.shape) / 50.0), color='red'))
@@ -108,4 +126,5 @@ def main():
 
 if __name__ == '__main__':
   multiprocessing.set_start_method('fork')
+  lib.StartStdErrLogging(logging.INFO)
   main()

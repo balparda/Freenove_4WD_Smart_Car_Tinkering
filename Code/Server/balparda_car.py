@@ -2,6 +2,7 @@
 """Balparda's car API."""
 
 import io
+import logging
 # import pdb
 import time
 
@@ -84,6 +85,10 @@ class Engine():
       right_lower: Speed to apply to lower right wheel, int, 1 to 10.
       tm: Time to apply motors, in seconds.
     """
+    left_upper, left_lower = int(left_upper), int(left_lower)
+    right_upper, right_lower = int(right_upper), int(right_lower)
+    logging.info('Move %r for %0.2f seconds',
+                 (left_upper, left_lower, right_upper, right_lower), tm)
     try:
       self._m.setMotorModel(round(Engine._GAIN * left_upper),
                             round(Engine._GAIN * left_lower),
@@ -102,6 +107,7 @@ class Engine():
 
     Works best when angle is +90.0 or -90.0 as car is actually non-linear.
     """
+    logging.info('Turn %0.2f degrees', angle)
     tm = abs(angle * (.7/90))
     if angle > 0:
       self.Move(5, 5, -4, -4, tm)
@@ -118,12 +124,14 @@ class Noise():
 
   def __enter__(self):
     """Enter context: start making noise."""
+    logging.info('Beep!')
     self._b.run('1')
     return self
 
   def __exit__(self, a, b, c):
     """Leave context: stop making noise."""
     self._b.run('0')
+    logging.info('Silence...')
 
 
 class Light():
@@ -142,6 +150,7 @@ class Light():
 
   def __enter__(self):
     """Enter context: turn on the leds."""
+    logging.info('Lights @ %r', self._dict)
     for n, (r, g, b) in self._dict.items():
       self._l.ledIndex(1 << n, r, g, b)
     return self
@@ -149,6 +158,7 @@ class Light():
   def __exit__(self, a, b, c):
     """Leave context: turn leds off."""
     self._l.colorWipe(self._l.strip, Led.Color(0, 0, 0))
+    logging.info('Lights off')
 
 
 class Sonar():
@@ -197,6 +207,7 @@ class Neck():
     Args:
       servo_dict: like {'H': horizontal_anlge, 'V': vertical_angle}
     """
+    logging.info('Neck to position %r', servo_dict)
     for t, a in servo_dict.items():
       t = t.upper()
       if a < -70.0:
@@ -209,10 +220,12 @@ class Neck():
 
   def Zero(self):
     """Return neck to central position."""
+    logging.info('Neck to zero (offset=%r)', self._o)
     self.Set({'H': 0.0, 'V': 0.0})
 
   def Demo(self):
     """Demos neck movement. Will block."""
+    logging.info('Starting neck demo')
     self.Zero()
     try:
       for a in range(-20, 70, 1):
@@ -230,6 +243,7 @@ class Neck():
         time.sleep(0.02)
     finally:
       self.Zero()
+      logging.info('Neck demo ended')
 
 
 class Infra():
@@ -281,6 +295,9 @@ class Cam():
   def __enter__(self):
     """Enter context: initialize the camera. ATTENTION: will block for 1.5 seconds."""
     self._c = picamera.PiCamera(resolution=self._resolution, framerate=self._framerate)
+    logging.info(
+        'Starting camera with resolution %r and framerate %d (+wait %0.2fs)',
+        self._resolution, self._framerate, Cam._SLEEP_TO_INIT)
     time.sleep(Cam._SLEEP_TO_INIT)
     return self
 
@@ -289,6 +306,7 @@ class Cam():
     if not self._c:
       raise Exception('Not initialized')
     self._c.close()
+    logging.info('Camera closed')
 
   def Click(self):
     """Take a single image.
@@ -312,6 +330,7 @@ class Cam():
       (image_object, image_bytes)
     """
     stream = io.BytesIO()
+    logging.info('Camera taking continuous bmp images')
     for _ in self._c.capture_continuous(stream, format='bmp'):
       stream.truncate()  # in case prior iterations output a longer image (unexpected!)
       stream.seek(0)     # rewind to start reading
@@ -333,10 +352,11 @@ def QueueImages(queue, stop_flag):
     stop_flag: a multiprocessing.Value('b', 0, lock=True) byte ('b' signed char) object that
         should start 0 (False) and become 1 (True) when the process should end.
   """
+  logging.info('Starting image capture pipeline')
   with Cam() as cam:
     for n, (img, _) in enumerate(cam.Stream()):
       if stop_flag.value:
         break
-      print('IMG: PUT %d' % n)
+      logging.info('Capture image #%04d', n)
       queue.put((n, img))
-  print('IMG: END')
+  logging.info('Image capture pipeline stopped')
