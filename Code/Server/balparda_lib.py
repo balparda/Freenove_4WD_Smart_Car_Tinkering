@@ -3,7 +3,7 @@
 
 import logging
 import multiprocessing
-import pdb
+# import pdb
 import time
 import sys
 
@@ -89,7 +89,8 @@ def UpToDateProcessingPipeline(input_queue, output_queue, process_call, stop_fla
 
   Args:
     input_queue: a multiprocessing.Queue object to be read from; NOT ALL objects will be processed
-    input_queue: a multiprocessing.Queue object to be write to
+    output_queue: a multiprocessing.Queue object to be write to; can be `None` and then values
+        from `process_call()` will be discarded (i.e. this process will be the end of a pipeline)
     process_call: a method call that takes objects from `input_queue` type and returns objects of
         `output_queue` type
     stop_flag: a multiprocessing.Value('b', 0, lock=True) byte ('b' signed char) object that
@@ -97,7 +98,7 @@ def UpToDateProcessingPipeline(input_queue, output_queue, process_call, stop_fla
   """
 
   def _patient_discarding_pickup():
-    # first wait for something in the queue by poling...
+    # first wait for something in the queue by poling... remember to allow for stop flag
     while not input_queue.qsize():
       if stop_flag.value:
         return None
@@ -129,10 +130,12 @@ def UpToDateProcessingPipeline(input_queue, output_queue, process_call, stop_fla
       if task is None:
         break  # this means stop_flag.value is True, so exit
       try:
-        if stop_flag.value:
+        if stop_flag.value:  # we might have gotten a stop flag during get()s
           break
         logging.info('Task #%04d is processing', n)
-        output_queue.put(process_call(task))
+        result = process_call(task)
+        if output_queue is not None:
+          output_queue.put(result)
         n += 1
       finally:
         input_queue.task_done()

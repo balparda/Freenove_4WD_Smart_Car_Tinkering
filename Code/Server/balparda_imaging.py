@@ -4,15 +4,12 @@
 import glob
 import itertools
 import logging
-import pdb
-import sys
+# import pdb
 import time
 
-# https://scipy-lectures.org/advanced/image_processing/
-import numpy as np
-# import scipy  # https://docs.scipy.org/doc/
-# from scipy import misc
-from scipy import ndimage  # https://docs.scipy.org/doc/scipy/reference/ndimage.html
+import numpy as np         # https://scipy-lectures.org/advanced/image_processing/
+from scipy import ndimage  # https://docs.scipy.org/doc/
+                           # https://docs.scipy.org/doc/scipy/reference/ndimage.html
                            # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.html
 from matplotlib import pyplot as plt
 from matplotlib import patches
@@ -103,6 +100,7 @@ class Image():
       ax[0].imshow(self._img)
       ax[1].imshow(bright_areas_mask.astype(np.uint8) * grey_img, cmap=plt.cm.gray)
       ax[1].add_patch(patches.Circle(com, radius=round(max(self._img.shape) / 100.0), color='red'))
+      # ax[1].annotate('x', xy=com, arrowprops={'arrowstyle': '->'})
       plt.show()
     return com
 
