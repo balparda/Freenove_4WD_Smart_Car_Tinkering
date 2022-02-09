@@ -92,11 +92,12 @@ def _MovementDecisionMaker(mock=False):
 
   class _MockNeck():  # mock car.Neck
 
-    def Zero(self):
-      time.sleep(0.2)
+    def __init__(self):
+      self._pos = (0, 0)
 
-    def Set(self, servo_dict):
-      logging.info('Neck to position %r', servo_dict)
+    def Delta(self, servo_dict):
+      self._pos = (self._pos[0] + servo_dict['H'], self._pos[1] + servo_dict['V'])
+      logging.info('Neck to position %r', self._pos)
       time.sleep(0.2)
 
   class _MockSonar():  # mock car.Sonar
@@ -117,7 +118,7 @@ def _MovementDecisionMaker(mock=False):
     x_angle, y_angle = int(x_angle), int(y_angle)
     dist = sonar.Read()
     logging.info('Got foci for image #%04d: (%d, %d) @ %0.2fm', num_img, x_angle, y_angle, dist)
-    neck.Set({'H': x_angle, 'V': y_angle})
+    neck.Delta({'H': x_angle, 'V': y_angle})
 
   return _MovementDecision
 

@@ -198,6 +198,7 @@ class Neck():
     """
     self._s = servo.Servo()
     self._o = offset
+    self._pos = {'H': 0, 'V': 0}
     if not self._o:
       raise Exception('Empty offset')
     self.Zero()
@@ -217,12 +218,25 @@ class Neck():
         a = -20.0
       if a > 70.0:
         a = 70.0
-      self._s.setServoPwm(Neck._NAME[t], round(a + 90.0 + self._o[t]))
+      self._Set(t, a)
+
+  def _Set(self, code, angle):
+    self._pos[code] = angle
+    self._s.setServoPwm(Neck._NAME[code], round(angle + 90.0 + self._o[code]))
 
   def Zero(self):
     """Return neck to central position."""
     logging.info('Neck to zero (offset=%r)', self._o)
     self.Set({'H': 0.0, 'V': 0.0})
+
+  def Delta(self, servo_dict):
+    """Apply delta to neck.
+
+    Args:
+      servo_dict: like {'H': horizontal_angle, 'V': vertical_angle}
+    """
+    self.Set({'H': self._pos['H'] + servo_dict['H'],
+              'V': self._pos['V'] + servo_dict['V']})
 
   def Demo(self):
     """Demos neck movement. Will block."""
