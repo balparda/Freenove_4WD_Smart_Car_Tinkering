@@ -39,7 +39,7 @@ def _MainPipelines(mock=False):
       name='brightness-pipeline',
       args=(img_queue,         # feed from image queue
             brightness_queue,  # write to this new queue
-            lambda i: (i[0], i[1], i[1].BrightnessFocus()),
+            lambda i: (i[0], i[1], i[1].BrightnessFocus()),  # processing is trivial in fact
             brightness_stop),
       daemon=True)
   # setup moving pipeline (acting on real or mock cars) with its semaphore
@@ -49,7 +49,7 @@ def _MainPipelines(mock=False):
       name='movement-pipeline',
       args=(brightness_queue,  # feed from brightness queue
             None,              # end of pipeline, so don't feed a new queue
-            _MovementDecisionMaker(mock=mock),
+            _MovementDecisionMaker(mock=mock),  # the actual movement operation goes here
             movement_stop),
       daemon=True)
   # start
@@ -60,7 +60,7 @@ def _MainPipelines(mock=False):
   try:
     # go to sleep while the pipeline does the job or while we wait for a Ctrl-C
     while True:
-      time.sleep(0.3)
+      time.sleep(0.3)  # main thread should mostly block here
   finally:
     # signal stop and wait for queues
     img_stop.value = 1

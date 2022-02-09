@@ -57,9 +57,9 @@ class Image():
     # https://stackoverflow.com/questions/12201577/how-can-i-convert-an-rgb-image-into-grayscale-in-python
     if not self._rgb:
       return self._img
-    added_img = ((Image._GREYSCALE_FACTORS[0] * self._img[:, :, 0].astype(np.int))
-                 + (Image._GREYSCALE_FACTORS[1] * self._img[:, :, 1].astype(np.int))
-                 + (Image._GREYSCALE_FACTORS[2] * self._img[:, :, 2].astype(np.int)))
+    added_img = ((Image._GREYSCALE_FACTORS[0] * self._img[:, :, 0].astype(np.int)) +
+                 (Image._GREYSCALE_FACTORS[1] * self._img[:, :, 1].astype(np.int)) +
+                 (Image._GREYSCALE_FACTORS[2] * self._img[:, :, 2].astype(np.int)))
     return np.round(added_img / float(sum(Image._GREYSCALE_FACTORS))).astype(np.uint8)
 
   _BRIGHT_AREAS_BLUR_INDEX = 15.0  # lower value = more bluring
