@@ -7,6 +7,7 @@ _MOCK = True
 
 import logging          # noqa: E402
 import multiprocessing  # noqa: E402
+import multiprocessing.sharedctypes  # noqa: E402
 # import pdb
 import time  # noqa: E402
 from typing import Callable, Tuple  # noqa: E402
@@ -33,7 +34,8 @@ def _MainPipelines(mock: bool = False) -> None:
   """
   # setup image pipeline (real or mock) with its queue and process semaphore
   img_queue = multiprocessing.JoinableQueue()  # type: multiprocessing.JoinableQueue
-  img_stop = multiprocessing.Value('b', 0, lock=True)
+  img_stop: multiprocessing.sharedctypes.Synchronized
+  img_stop = multiprocessing.Value('b', 0, lock=True)  # type: ignore
   img_process = multiprocessing.Process(
       target=imaging.MockQueueImages if mock else car.QueueImages,
       name='image-pipeline',
@@ -42,7 +44,8 @@ def _MainPipelines(mock: bool = False) -> None:
       daemon=True)
   # setup processing pipeline (feeding real or mock images) with its queue and process semaphore
   brightness_queue = multiprocessing.JoinableQueue()  # type: multiprocessing.JoinableQueue
-  brightness_stop = multiprocessing.Value('b', 0, lock=True)
+  brightness_stop: multiprocessing.sharedctypes.Synchronized
+  brightness_stop = multiprocessing.Value('b', 0, lock=True)  # type: ignore
   brightness_process = multiprocessing.Process(
       target=lib.UpToDateProcessingPipeline,
       name='brightness-pipeline',
@@ -52,7 +55,8 @@ def _MainPipelines(mock: bool = False) -> None:
             brightness_stop),
       daemon=True)
   # setup moving pipeline (acting on real or mock cars) with its semaphore
-  movement_stop = multiprocessing.Value('b', 0, lock=True)
+  movement_stop: multiprocessing.sharedctypes.Synchronized
+  movement_stop = multiprocessing.Value('b', 0, lock=True)  # type: ignore
   movement_process = multiprocessing.Process(
       target=lib.UpToDateProcessingPipeline,
       name='movement-pipeline',
@@ -72,9 +76,9 @@ def _MainPipelines(mock: bool = False) -> None:
       time.sleep(0.3)  # main thread should mostly block here
   finally:
     # signal stop and wait for queues
-    img_stop.value = 1         # type: ignore
-    brightness_stop.value = 1  # type: ignore
-    movement_stop.value = 1    # type: ignore
+    img_stop.value = 1
+    brightness_stop.value = 1
+    movement_stop.value = 1
     logging.info('Waiting for image pipeline')
     img_process.join()
     logging.info('Waiting for processing pipeline')

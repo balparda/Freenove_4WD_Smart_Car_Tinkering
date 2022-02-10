@@ -3,9 +3,11 @@
 
 import logging
 import multiprocessing
+import multiprocessing.sharedctypes
 # import pdb
 import time
 import sys
+from typing import Any, Callable
 
 
 _LOG_FORMATS = (
@@ -16,7 +18,7 @@ _LOG_FORMATS = (
 # example '20220209.14:16:47.667    INFO[SomeMethodName]: Some message'
 
 
-def StartMultiprocessing(method='fork'):
+def StartMultiprocessing(method: str = 'fork') -> None:
   """Start multiprocessing by setting up method.
 
   Should be called only once like  `if __name__ == '__main__': lib.StartMultiprocessing(); main()`.
@@ -27,7 +29,7 @@ def StartMultiprocessing(method='fork'):
   multiprocessing.set_start_method(method)
 
 
-def StartStdErrLogging(level=logging.INFO, logprocess=False):
+def StartStdErrLogging(level: int = logging.INFO, logprocess: bool = False) -> None:
   """Start logging to stderr.
 
   Should be called only once like  `if __name__ == '__main__': lib.StartStdErrLogging(); main()`.
@@ -51,21 +53,21 @@ def StartStdErrLogging(level=logging.INFO, logprocess=False):
 class Timer():
   """Time execution."""
 
-  def __init__(self):
+  def __init__(self) -> None:
     """Create context object."""
-    self._t = None
+    self._t = 0.0
 
-  def __enter__(self):
+  def __enter__(self) -> Any:
     """Enter context: get start time."""
     self._t = time.time()
     return self
 
-  def __exit__(self, a, b, c):
+  def __exit__(self, a, b, c) -> None:
     """Leave context: stop timer by printing value."""
     logging.warning('Execution time: %0.2f seconds', time.time() - self._t)
 
 
-def Timed(func):
+def Timed(func: Callable):
   """Make any call print its execution time if used as a decorator."""
   def _wrapped_call(*args, **kwargs):
     with Timer():
@@ -73,7 +75,10 @@ def Timed(func):
   return _wrapped_call
 
 
-def UpToDateProcessingPipeline(input_queue, output_queue, process_call, stop_flag):
+def UpToDateProcessingPipeline(input_queue: multiprocessing.JoinableQueue,
+                               output_queue: multiprocessing.JoinableQueue,
+                               process_call: Callable,
+                               stop_flag: multiprocessing.sharedctypes.Synchronized) -> None:
   """Define a subprocess for processing continuously from `input_queue` to `output_queue`.
 
   Expects to be the entry point for a multiprocessing.Process() call. Will process items by
@@ -97,7 +102,7 @@ def UpToDateProcessingPipeline(input_queue, output_queue, process_call, stop_fla
         should start 0 (False) and become 1 (True) when the process should end.
   """
 
-  def _patient_discarding_pickup():
+  def _patient_discarding_pickup() -> Any:
     # first wait for something in the queue by poling... remember to allow for stop flag
     while not input_queue.qsize():
       if stop_flag.value:

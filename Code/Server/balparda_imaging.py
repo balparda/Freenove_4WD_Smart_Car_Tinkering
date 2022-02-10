@@ -2,11 +2,15 @@
 """Imaging module."""
 
 import glob
+import io
 import itertools
 import logging
 import math
+import multiprocessing
+import multiprocessing.sharedctypes
 # import pdb
 import time
+from typing import List, Tuple, Union
 
 import numpy as np         # type: ignore
 from scipy import ndimage  # type: ignore
@@ -21,7 +25,7 @@ import imageio  # type: ignore
 # https://imageio.readthedocs.io/en/stable/
 
 
-def CameraAngleOfView(focal_length, sensor_size):
+def CameraAngleOfView(focal_length: float, sensor_size: float) -> float:
   """Camera angle of view.
 
   Args:
@@ -37,7 +41,7 @@ def CameraAngleOfView(focal_length, sensor_size):
 class Image():
   """General imaging class."""
 
-  def __init__(self, img):
+  def __init__(self, img: Union[np.ndarray, str, io.BytesIO]) -> None:
     """Load an `img` as a copy of another object, as a path, URL, or io.BytesIO.
 
     Args:
@@ -49,11 +53,11 @@ class Image():
       self._img = imageio.imread(img)  # takes file paths, URLs, and io.BytesIO
     self._rgb = len(self._img.shape) == 3
 
-  def Save(self, out):
+  def Save(self, out: Union[str, io.BytesIO]) -> None:
     """Save image to `out`, which can be a path or an io.BytesIO."""
     imageio.imsave(out, self._img)
 
-  def Show(self, interpolation=True):
+  def Show(self, interpolation: bool = True) -> None:
     """Show image in pyplot window. Will block.
 
     Args:
@@ -70,7 +74,7 @@ class Image():
   # (R,G,B) multipliers for greyscale conversion
   _GREYSCALE_FACTORS = (299, 587, 114)
 
-  def Grey(self):
+  def Grey(self) -> np.ndarray:
     """Return a greyscale image object."""
     # https://stackoverflow.com/questions/12201577/how-can-i-convert-an-rgb-image-into-grayscale-in-python
     if not self._rgb:
@@ -82,7 +86,7 @@ class Image():
 
   _BRIGHT_AREAS_BLUR_INDEX = 15.0  # lower value = more bluring
 
-  def _BrightAreas(self):
+  def _BrightAreas(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, List[int], int]:
     """Compute image bright areas.
 
     Returns:
@@ -95,7 +99,7 @@ class Image():
     bright_labels, nlabels = ndimage.label(bright_areas_mask)
     return (grey_img, blur_img, bright_areas_mask, bright_labels, nlabels)
 
-  def BrightnessFocus(self, use_masses=True, plot=False):
+  def BrightnessFocus(self, use_masses: bool = True, plot: bool = False) -> Tuple[int, int]:
     """Get the center of brightness for the image.
 
     Args:
@@ -122,7 +126,11 @@ class Image():
       plt.show()
     return com
 
-  def PointToAngle(self, x, y, x_angle_view, y_angle_view):
+  def PointToAngle(self,
+                   x: int,
+                   y: int,
+                   x_angle_view: float,
+                   y_angle_view: float) -> Tuple[float, float]:
     """Convert image point (x,y) to an angle in the real world based on x/y angle of view.
 
     Args:
@@ -143,7 +151,10 @@ class Image():
     return (x / x_px_per_degrees, -y / y_px_per_degrees)
 
 
-def MockQueueImages(queue, stop_flag, mock_images_glob, sleep_time):
+def MockQueueImages(queue: multiprocessing.JoinableQueue,
+                    stop_flag: multiprocessing.sharedctypes.Synchronized,
+                    mock_images_glob: str,
+                    sleep_time: float) -> None:
   """Define a subprocess for streaming mock images continuously, mocking balparda_lib.QueueImages().
 
   Expects to be the entry point for a multiprocessing.Process() call. Will write to `queue`
