@@ -1,11 +1,10 @@
 #!/usr/bin/python3 -O
 """Testing (scratchpad) and child-friendly module."""
 
-import pdb
-import time
+# import pdb
 
-import balparda_car as car
-from luna_lib import *
+from Code.Server import balparda_car as car
+from Code.Server import luna_lib as ll
 
 bt = car.Battery()
 ph = car.Photoresistor()
@@ -17,24 +16,24 @@ print(ph)
 print(sn)
 print(ir)
 
-with BB(), car.Neck(offset={'H': 6.0, 'V': -23.0}) as nk:
+with ll.BB(), car.Neck(offset={'H': 6.0, 'V': -23.0}) as nk:
 
   nk.Demo()
   raise
 
   nk.Set({'H': 0, 'V': 0})
-  Pa()
+  ll.Pa()
   nk.Zero()
-  Pa()
+  ll.Pa()
 
   raise
 
-  Fr()
+  ll.Fr()
 
-  Es()
+  ll.Es()
 
-  Di()
+  ll.Di()
 
-  Pa()
+  ll.Pa()
 
-  Tr()
+  ll.Tr()

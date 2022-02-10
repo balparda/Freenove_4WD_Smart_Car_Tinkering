@@ -1,19 +1,21 @@
 #!/usr/bin/python3 -O
 """Follow-the-Light automaton program for the car."""
 
-_MOCK = False
+# noqa: E402
 
-import logging
-import multiprocessing
+_MOCK = True
+
+import logging          # noqa: E402
+import multiprocessing  # noqa: E402
 # import pdb
-import time
+import time  # noqa: E402
 
-import balparda_imaging as imaging
-import balparda_lib as lib
+from Code.Server import balparda_imaging as imaging  # noqa: E402
+from Code.Server import balparda_lib as lib          # noqa: E402
 if not _MOCK:
-  import balparda_car as car  # this module will not load on non-Raspberry-Pi machines
+  from Code.Server import balparda_car as car  # will not load on non-Raspberry-Pi machines
 else:
-  car = None
+  car = None  # type: ignore
 
 
 _ANGLE_OF_VIEW = (53.5, 41.41)

@@ -6,18 +6,17 @@ import logging
 # import pdb
 import time
 
-# from PIL import Image
+import picamera  # type: ignore
 
-import ADC
-import Buzzer
-import Led
-import Line_Tracking
-import Motor
-import picamera
-import servo
-import Ultrasonic
+from Code.Server import ADC
+from Code.Server import Buzzer
+from Code.Server import Led
+from Code.Server import Line_Tracking
+from Code.Server import Motor
+from Code.Server import servo
+from Code.Server import Ultrasonic
 
-import balparda_imaging as imaging
+from Code.Server import balparda_imaging as imaging
 
 
 class Battery():
@@ -213,10 +212,14 @@ class Neck():
       h: horizontal angle, in degrees
       v: vertical angle, in degrees
     """
-    if h < -70: h = -70
-    if h > 70: h = 70
-    if v < -20: v = -20
-    if v > 70: v = 70
+    if h < -70:
+      h = -70
+    if h > 70:
+      h = 70
+    if v < -20:
+      v = -20
+    if v > 70:
+      v = 70
     logging.info('Neck to position %s', Neck._NECK_POSITION_STR((h, v)))
     self._Set(h, v)
 
@@ -234,7 +237,6 @@ class Neck():
       self._s.setServoPwm('0', self._pos[0] + self._o[0] + 90)
       self._s.setServoPwm('1', self._pos[1] + self._o[1] + 90)
       time.sleep(0.02)
-
 
   def Zero(self):
     """Return neck to central position."""
@@ -288,9 +290,9 @@ class Infra():
 
   def Read(self):
     """Return (left_bool, middle_bool, right_bool) infra-red reading."""
-    return (Line_Tracking.GPIO.input(self._l.IR01)==True,
-            Line_Tracking.GPIO.input(self._l.IR02)==True,
-            Line_Tracking.GPIO.input(self._l.IR03)==True)
+    return (bool(Line_Tracking.GPIO.input(self._l.IR01)),
+            bool(Line_Tracking.GPIO.input(self._l.IR02)),
+            bool(Line_Tracking.GPIO.input(self._l.IR03)))
 
   def __str__(self):
     """Print human readable infra-red left, middle, and right reading."""

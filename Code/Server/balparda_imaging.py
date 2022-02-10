@@ -8,13 +8,17 @@ import math
 # import pdb
 import time
 
-import numpy as np         # https://scipy-lectures.org/advanced/image_processing/
-from scipy import ndimage  # https://docs.scipy.org/doc/
-                           # https://docs.scipy.org/doc/scipy/reference/ndimage.html
-                           # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.html
-from matplotlib import pyplot as plt
+import numpy as np         # type: ignore
+from scipy import ndimage  # type: ignore
+from matplotlib import pyplot as plt  # type: ignore
 from matplotlib import patches
-import imageio  # https://imageio.readthedocs.io/en/stable/
+import imageio  # type: ignore
+
+# https://scipy-lectures.org/advanced/image_processing/
+# https://docs.scipy.org/doc/
+# https://docs.scipy.org/doc/scipy/reference/ndimage.html
+# https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.html
+# https://imageio.readthedocs.io/en/stable/
 
 
 def CameraAngleOfView(focal_length, sensor_size):

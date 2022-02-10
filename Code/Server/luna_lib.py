@@ -2,7 +2,7 @@
 """Module will simplify car concepts to its bare minimal call, for beginner understanding."""
 
 import time
-import balparda_car as car
+from Code.Server import balparda_car as car
 
 
 _ENG = car.Engine()
