@@ -35,7 +35,7 @@ def CameraAngleOfView(focal_length, sensor_size):
 
 
 class Image():
-  """General imaging class, tailored for car use."""
+  """General imaging class."""
 
   def __init__(self, img):
     """Load an `img` as a copy of another object, as a path, URL, or io.BytesIO.

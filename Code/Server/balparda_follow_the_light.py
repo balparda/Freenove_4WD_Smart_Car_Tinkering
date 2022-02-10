@@ -9,6 +9,7 @@ import logging          # noqa: E402
 import multiprocessing  # noqa: E402
 # import pdb
 import time  # noqa: E402
+from typing import Callable, Tuple  # noqa: E402
 
 from Code.Server import balparda_imaging as imaging  # noqa: E402
 from Code.Server import balparda_lib as lib          # noqa: E402
@@ -24,14 +25,14 @@ _MOCK_TEMPLATE = 'Code/Server/testimg/capture-001-*.jpg'
 _SAVE_TEMPLATE = 'Code/Server/testimg/capture-002-%03d.jpg'
 
 
-def _MainPipelines(mock=False):
+def _MainPipelines(mock: bool = False) -> None:
   """Will start image pipelines pipe them into decision pipeline.
 
   Args:
     mock: (default False) If True will use mock modules that load on regular machines, for testing
   """
   # setup image pipeline (real or mock) with its queue and process semaphore
-  img_queue = multiprocessing.JoinableQueue()
+  img_queue = multiprocessing.JoinableQueue()  # type: multiprocessing.JoinableQueue
   img_stop = multiprocessing.Value('b', 0, lock=True)
   img_process = multiprocessing.Process(
       target=imaging.MockQueueImages if mock else car.QueueImages,
@@ -40,7 +41,7 @@ def _MainPipelines(mock=False):
             (img_queue, img_stop)),
       daemon=True)
   # setup processing pipeline (feeding real or mock images) with its queue and process semaphore
-  brightness_queue = multiprocessing.JoinableQueue()
+  brightness_queue = multiprocessing.JoinableQueue()  # type: multiprocessing.JoinableQueue
   brightness_stop = multiprocessing.Value('b', 0, lock=True)
   brightness_process = multiprocessing.Process(
       target=lib.UpToDateProcessingPipeline,
@@ -71,9 +72,9 @@ def _MainPipelines(mock=False):
       time.sleep(0.3)  # main thread should mostly block here
   finally:
     # signal stop and wait for queues
-    img_stop.value = 1
-    brightness_stop.value = 1
-    movement_stop.value = 1
+    img_stop.value = 1         # type: ignore
+    brightness_stop.value = 1  # type: ignore
+    movement_stop.value = 1    # type: ignore
     logging.info('Waiting for image pipeline')
     img_process.join()
     logging.info('Waiting for processing pipeline')
@@ -82,45 +83,48 @@ def _MainPipelines(mock=False):
     movement_process.join()
 
 
-def _MovementDecisionMaker(mock=False):
+def _MovementDecisionMaker(mock: bool = False) -> Callable:
   """Create a decision maker incorporating either the real or a mock car."""
 
   class _MockEngine():  # mock car.Engine
 
-    def Straight(self, speed, tm):
+    def Straight(self, speed: int, tm: float) -> None:
       logging.info('Move at speed %d for %0.2f seconds', speed, tm)
       time.sleep(tm)
 
-    def Turn(self, angle):
+    def Turn(self, angle: int) -> None:
       logging.info('Turn %0.2f degrees', angle)
       time.sleep(int(abs(angle * (.7/90))))
 
   class _MockNeck():  # mock car.Neck
 
-    def __init__(self):
+    def __init__(self) -> None:
       self._pos = (0, 0)
 
-    def Zero(self):
+    def Zero(self) -> None:
       self._pos = (0, 0)
       logging.info('Neck to ZERO/CENTER')
 
-    def Delta(self, x, y):
+    def Delta(self, x: int, y: int) -> None:
       self._pos = (self._pos[0] + x, self._pos[1] + y)
       logging.info('Neck to position %r', self._pos)
       time.sleep(0.3)
 
   class _MockSonar():  # mock car.Sonar
 
-    def Read(self):
+    def Read(self) -> float:
       time.sleep(0.1)
       return 1.0
 
+  engine: _MockEngine
+  sonar: _MockSonar
+  neck: _MockNeck
   # engine = _MockEngine() if mock else car.Engine()
-  sonar = _MockSonar() if mock else car.Sonar()
-  neck = _MockNeck() if mock else car.Neck(offset=_NECK_OFFSET)
+  sonar = _MockSonar() if mock else car.Sonar()                  # type: ignore
+  neck = _MockNeck() if mock else car.Neck(offset=_NECK_OFFSET)  # type: ignore
   neck.Zero()
 
-  def _MovementDecision(input):
+  def _MovementDecision(input: Tuple[int, imaging.Image, Tuple[int, int]]) -> None:
     """Take a "step" movement decision based on a camera and sonar reading."""
     # TODO: maybe move sonar readings into a separate pipeline?
     num_img, img, (x_focus, y_focus) = input
@@ -134,7 +138,7 @@ def _MovementDecisionMaker(mock=False):
   return _MovementDecision
 
 
-def main():
+def main() -> None:
   """Execute main method."""
   logging.info('Start')
   try:
