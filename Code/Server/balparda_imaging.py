@@ -136,7 +136,7 @@ class Image():
     y_px_per_degrees = y_dim / float(y_angle_view)
     x -= x_dim / 2
     y -= y_dim / 2
-    return (x / x_px_per_degrees, y / y_px_per_degrees)
+    return (x / x_px_per_degrees, -y / y_px_per_degrees)
 
 
 def MockQueueImages(queue, stop_flag, mock_images_glob, sleep_time):

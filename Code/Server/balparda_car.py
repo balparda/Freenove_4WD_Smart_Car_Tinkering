@@ -3,7 +3,7 @@
 
 import io
 import logging
-# import pdb
+import pdb
 import time
 
 # from PIL import Image
@@ -185,58 +185,70 @@ class Sonar():
 class Neck():
   """Car neck and head movement functionality wrapper."""
 
-  _NAME = {
-      'H': '0',
-      'V': '1',
-  }
-
-  def __init__(self, offset={'H': 0.0, 'V': 0.0}):
+  def __init__(self, offset=(0, 0)):
     """Create object.
 
     Args:
-      offset: like {'H': horizontal_offset, 'V': vertical_offset}, in degrees, default is no offset
+      offset: like (horizontal_offset, vertical_offset), in degrees, default is no offset
     """
     self._s = servo.Servo()
-    self._o = offset
-    self._pos = {'H': 0, 'V': 0}
-    if not self._o:
+    self._pos = (0, 0)
+    if not offset:
       raise Exception('Empty offset')
+    self._o = (int(round(offset[0])), int(round(offset[1])))
+
+  def __enter__(self):
+    """Enter context: reset neck to center."""
+    self.Zero()
+    return self
+
+  def __exit__(self, a, b, c):
+    """Leave context: reset neck to center."""
     self.Zero()
 
-  def Set(self, servo_dict):
+  def Set(self, h, v):
     """Set neck to a position.
 
     Args:
-      servo_dict: like {'H': horizontal_angle, 'V': vertical_angle}
+      h: horizontal angle, in degrees
+      v: vertical angle, in degrees
     """
-    logging.info('Neck to position %r', servo_dict)
-    for t, a in servo_dict.items():
-      t = t.upper()
-      if a < -70.0:
-        a = -70.0
-      if t == 'V' and a < -20.0:
-        a = -20.0
-      if a > 70.0:
-        a = 70.0
-      self._Set(t, a)
+    if h < -70: h = -70
+    if h > 70: h = 70
+    if v < -20: v = -20
+    if v > 70: v = 70
+    logging.info('Neck to position %s', Neck._NECK_POSITION_STR((h, v)))
+    self._Set(h, v)
 
-  def _Set(self, code, angle):
-    self._pos[code] = angle
-    self._s.setServoPwm(Neck._NAME[code], round(angle + 90.0 + self._o[code]))
+  _MAX_STEP = 3
+
+  def _Set(self, h, v):
+    new_pos = (int(round(h)), int(round(v)))
+    while self._pos[0] != new_pos[0] or self._pos[1] != new_pos[1]:
+      hd, vd = new_pos[0] - self._pos[0], new_pos[1] - self._pos[1]
+      if abs(hd) > Neck._MAX_STEP:
+        hd = Neck._MAX_STEP if hd > 0 else -Neck._MAX_STEP
+      if abs(vd) > Neck._MAX_STEP:
+        vd = Neck._MAX_STEP if vd > 0 else -Neck._MAX_STEP
+      self._pos = (self._pos[0] + hd, self._pos[1] + vd)
+      self._s.setServoPwm('0', self._pos[0] + self._o[0] + 90)
+      self._s.setServoPwm('1', self._pos[1] + self._o[1] + 90)
+      time.sleep(0.02)
+
 
   def Zero(self):
     """Return neck to central position."""
-    logging.info('Neck to zero (offset=%r)', self._o)
-    self.Set({'H': 0.0, 'V': 0.0})
+    logging.info('Neck to ZERO/CENTER, offset=%s', Neck._NECK_POSITION_STR(self._o))
+    self._Set(0, 0)
 
-  def Delta(self, servo_dict):
+  def Delta(self, h, v):
     """Apply delta to neck.
 
     Args:
-      servo_dict: like {'H': horizontal_angle, 'V': vertical_angle}
+      h: horizontal delta angle, in degrees
+      v: vertical delta angle, in degrees
     """
-    self.Set({'H': self._pos['H'] + servo_dict['H'],
-              'V': self._pos['V'] + servo_dict['V']})
+    self.Set(self._pos[0] + h, self._pos[1] + v)
 
   def Demo(self):
     """Demos neck movement. Will block."""
@@ -259,6 +271,12 @@ class Neck():
     finally:
       self.Zero()
       logging.info('Neck demo ended')
+
+  _NECK_POSITION_STR = lambda p: '(H: %+02d, V: %+02d) degrees' % p
+
+  def __str__(self):
+    """Readable respresentation of neck position."""
+    return Neck._NECK_POSITION_STR(self._pos)
 
 
 class Infra():
@@ -355,7 +373,7 @@ class Cam():
       data = stream.read()
       img = imaging.Image(data)
       yield (img, data)
-      stream.seek(0)  # if we don't rewind again caoture_continuous() will write at the end
+      stream.seek(0)  # if we don't rewind again capture_continuous() will write at the end
 
 
 def QueueImages(queue, stop_flag):

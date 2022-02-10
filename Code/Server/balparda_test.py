@@ -10,7 +10,6 @@ from luna_lib import *
 bt = car.Battery()
 ph = car.Photoresistor()
 sn = car.Sonar()
-nk = car.Neck(offset={'H': 6.0, 'V': -23.0})
 ir = car.Infra()
 
 print(bt)
@@ -18,7 +17,7 @@ print(ph)
 print(sn)
 print(ir)
 
-with BB():
+with BB(), car.Neck(offset={'H': 6.0, 'V': -23.0}) as nk:
 
   nk.Demo()
   raise

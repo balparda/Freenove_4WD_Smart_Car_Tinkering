@@ -1,11 +1,11 @@
 #!/usr/bin/python3 -O
 """Follow-the-Light automaton program for the car."""
 
-_MOCK = True
+_MOCK = False
 
 import logging
 import multiprocessing
-# import pdb
+import pdb
 import time
 
 import balparda_imaging as imaging
@@ -17,6 +17,8 @@ else:
 
 
 _ANGLE_OF_VIEW = (53.5, 41.41)
+_NECK_OFFSET = (6, -30)
+_TEMPLATE = 'testimg/capture-002-%03d.jpg'
 
 
 def _MainPipelines(mock=False):
@@ -95,6 +97,14 @@ def _MovementDecisionMaker(mock=False):
     def __init__(self):
       self._pos = (0, 0)
 
+    def __enter__(self):
+      self._pos = (0, 0)
+      logging.info('Neck to zero/center')
+
+    def __exit__(self, a, b, c):
+      self._pos = (0, 0)
+      logging.info('Neck to zero/center')
+
     def Delta(self, servo_dict):
       self._pos = (self._pos[0] + servo_dict['H'], self._pos[1] + servo_dict['V'])
       logging.info('Neck to position %r', self._pos)
@@ -106,19 +116,21 @@ def _MovementDecisionMaker(mock=False):
       time.sleep(0.1)
       return 1.0
 
-  engine = _MockEngine() if mock else car.Engine()
-  neck = _MockNeck() if mock else car.Neck(offset={'H': 6.0, 'V': -23.0})
+  # engine = _MockEngine() if mock else car.Engine()
   sonar = _MockSonar() if mock else car.Sonar()
+  neck = _MockNeck() if mock else car.Neck(offset=_NECK_OFFSET)
+  neck.Zero()
 
   def _MovementDecision(input):
     """Take a "step" movement decision based on a camera and sonar reading."""
     # TODO: maybe move sonar readings into a separate pipeline?
     num_img, img, (x_focus, y_focus) = input
+    # img.Save(_TEMPLATE % num_img)  # uncomment to save the stream for testing...
     x_angle, y_angle = img.PointToAngle(x_focus, y_focus, _ANGLE_OF_VIEW[0], _ANGLE_OF_VIEW[1])
     x_angle, y_angle = int(x_angle), int(y_angle)
     dist = sonar.Read()
     logging.info('Got foci for image #%04d: (%d, %d) @ %0.2fm', num_img, x_angle, y_angle, dist)
-    neck.Delta({'H': x_angle, 'V': y_angle})
+    neck.Delta(x_angle, y_angle)
 
   return _MovementDecision
 
