@@ -1,5 +1,5 @@
 import time
-from PCA9685 import PCA9685
+from Code.Server.PCA9685 import PCA9685
 class Servo:
     def __init__(self):
         self.PwmServo = PCA9685(0x40, debug=True)
@@ -27,7 +27,7 @@ class Servo:
 
 # Main program logic follows:
 if __name__ == '__main__':
-    print("Now servos will rotate to 90°.") 
+    print("Now servos will rotate to 90°.")
     print("If they have already been at 90°, nothing will be observed.")
     print("Please keep the program running when installing the servos.")
     print("After that, you can press ctrl-C to end the program.")
@@ -39,12 +39,3 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             print ("\nEnd of program")
             break
-
-    
-
-    
-       
-
-
-
-    

@@ -1,5 +1,5 @@
 import time
-from Motor import *
+from Code.Server.Motor import *
 import RPi.GPIO as GPIO
 class Line_Tracking:
     def __init__(self):
@@ -32,7 +32,7 @@ class Line_Tracking:
             elif self.LMR==7:
                 #pass
                 PWM.setMotorModel(0,0,0,0)
-            
+
 infrared=Line_Tracking()
 # Main program logic follows:
 if __name__ == '__main__':

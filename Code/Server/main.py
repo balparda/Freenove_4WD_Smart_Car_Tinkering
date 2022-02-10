@@ -5,10 +5,10 @@ import struct
 import time
 import picamera
 import sys,getopt
-from Thread import *
+from Code.Server.Thread import *
 from threading import Thread
-from server import Server
-from server_ui import Ui_server_ui
+from Code.Server.server import Server
+from Code.Server.server_ui import Ui_server_ui
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -16,7 +16,7 @@ from PyQt5.QtGui import *
 
 
 class mywindow(QMainWindow,Ui_server_ui):
-    
+
     def __init__(self):
         self.user_ui=True
         self.start_tcp=False
@@ -34,7 +34,7 @@ class mywindow(QMainWindow,Ui_server_ui):
             self.Button_Server.clicked.connect(self.on_pushButton)
             self.pushButton_Close.clicked.connect(self.close)
             self.pushButton_Min.clicked.connect(self.windowMinimumed)
-        
+
         if self.start_tcp:
             self.TCP_Server.StartTcpServer()
             self.ReadData=Thread(target=self.TCP_Server.readdata)
@@ -46,7 +46,7 @@ class mywindow(QMainWindow,Ui_server_ui):
             if self.user_ui:
                 self.label.setText("Server On")
                 self.Button_Server.setText("Off")
-                
+
     def windowMinimumed(self):
         self.showMinimized()
     def mousePressEvent(self, event):
@@ -54,15 +54,15 @@ class mywindow(QMainWindow,Ui_server_ui):
             self.m_drag=True
             self.m_DragPosition=event.globalPos()-self.pos()
             event.accept()
- 
+
     def mouseMoveEvent(self, QMouseEvent):
         if QMouseEvent.buttons() and Qt.LeftButton:
             self.move(QMouseEvent.globalPos()-self.m_DragPosition)
             QMouseEvent.accept()
- 
+
     def mouseReleaseEvent(self, QMouseEvent):
         self.m_drag=False
-        
+
     def parseOpt(self):
         self.opts,self.args = getopt.getopt(sys.argv[1:],"tn")
         for o,a in self.opts:
@@ -71,7 +71,7 @@ class mywindow(QMainWindow,Ui_server_ui):
                 self.start_tcp=True
             elif o in ('-n'):
                 self.user_ui=False
-                        
+
     def close(self):
         try:
            stop_thread(self.SendVideo)
@@ -102,7 +102,7 @@ class mywindow(QMainWindow,Ui_server_ui):
             self.SendVideo.start()
             self.ReadData.start()
             self.power.start()
-            
+
         elif self.label.text()=='Server On':
             self.label.setText("Server Off")
             self.Button_Server.setText("On")
@@ -115,11 +115,11 @@ class mywindow(QMainWindow,Ui_server_ui):
                 pass
             self.TCP_Server.StopTcpServer()
             print ("Close TCP")
-            
+
 if __name__ == '__main__':
     myshow=mywindow()
     if myshow.user_ui==True:
-        myshow.show();   
+        myshow.show();
         sys.exit(myshow.app.exec_())
     else:
         try:

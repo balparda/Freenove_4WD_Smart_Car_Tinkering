@@ -1,5 +1,5 @@
 import time
-from Led import *
+from Code.Server.Led import *
 led=Led()
 def test_Led():
     try:
@@ -19,11 +19,11 @@ def test_Led():
         led.colorWipe(led.strip, Color(0,0,0))  #turn off the light
         print ("\nEnd of program")
 
-        
-        
-from Motor import *            
-PWM=Motor()          
-def test_Motor(): 
+
+
+from Code.Server.Motor import *
+PWM=Motor()
+def test_Motor():
     try:
         PWM.setMotorModel(1000,1000,1000,1000)       #Forward
         print ("The car is moving forward")
@@ -31,11 +31,11 @@ def test_Motor():
         PWM.setMotorModel(-1000,-1000,-1000,-1000)   #Back
         print ("The car is going backwards")
         time.sleep(1)
-        PWM.setMotorModel(-1500,-1500,2000,2000)       #Left 
+        PWM.setMotorModel(-1500,-1500,2000,2000)       #Left
         print ("The car is turning left")
         time.sleep(1)
-        PWM.setMotorModel(2000,2000,-1500,-1500)       #Right 
-        print ("The car is turning right")  
+        PWM.setMotorModel(2000,2000,-1500,-1500)       #Right
+        print ("The car is turning right")
         time.sleep(1)
         PWM.setMotorModel(0,0,0,0)                   #Stop
         print ("\nEnd of program")
@@ -44,8 +44,8 @@ def test_Motor():
         print ("\nEnd of program")
 
 
-from Ultrasonic import *
-ultrasonic=Ultrasonic()                
+from Code.Server.Ultrasonic import *
+ultrasonic=Ultrasonic()
 def test_Ultrasonic():
     try:
         while True:
@@ -56,7 +56,7 @@ def test_Ultrasonic():
         print ("\nEnd of program")
 
 
-from Line_Tracking import *
+from Code.Server.Line_Tracking import *
 line=Line_Tracking()
 def test_Infrared():
     try:
@@ -71,7 +71,7 @@ def test_Infrared():
         print ("\nEnd of program")
 
 
-from servo import *
+from Code.Server.servo import *
 pwm=Servo()
 def test_Servo():
     try:
@@ -87,14 +87,14 @@ def test_Servo():
                 time.sleep(0.01)
             for i in range(150,80,-1):
                 pwm.setServoPwm('1',i)
-                time.sleep(0.01)   
+                time.sleep(0.01)
     except KeyboardInterrupt:
         pwm.setServoPwm('0',90)
         pwm.setServoPwm('1',90)
         print ("\nEnd of program")
-        
-        
-from ADC import *
+
+
+from Code.Server.ADC import *
 adc=Adc()
 def test_Adc():
     try:
@@ -110,7 +110,7 @@ def test_Adc():
     except KeyboardInterrupt:
         print ("\nEnd of program")
 
-from Buzzer import *
+from Code.Server.Buzzer import *
 buzzer=Buzzer()
 def test_Buzzer():
     try:
@@ -126,7 +126,7 @@ def test_Buzzer():
     except KeyboardInterrupt:
         buzzer.run('0')
         print ("\nEnd of program")
-           
+
 # Main program logic follows:
 if __name__ == '__main__':
 
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     import sys
     if len(sys.argv)<2:
         print ("Parameter error: Please assign the device")
-        exit() 
+        exit()
     if sys.argv[1] == 'Led':
         test_Led()
     elif sys.argv[1] == 'Motor':
@@ -142,15 +142,10 @@ if __name__ == '__main__':
     elif sys.argv[1] == 'Ultrasonic':
         test_Ultrasonic()
     elif sys.argv[1] == 'Infrared':
-        test_Infrared()        
-    elif sys.argv[1] == 'Servo': 
-        test_Servo()               
-    elif sys.argv[1] == 'ADC':   
-        test_Adc()  
-    elif sys.argv[1] == 'Buzzer':   
-        test_Buzzer()  
-
-        
-        
-        
-        
+        test_Infrared()
+    elif sys.argv[1] == 'Servo':
+        test_Servo()
+    elif sys.argv[1] == 'ADC':
+        test_Adc()
+    elif sys.argv[1] == 'Buzzer':
+        test_Buzzer()

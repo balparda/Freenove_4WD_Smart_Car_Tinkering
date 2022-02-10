@@ -1,4 +1,4 @@
-#!/usr/bin/python 
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 import io
 import socket
@@ -8,20 +8,20 @@ import picamera
 import fcntl
 import  sys
 import threading
-from Motor import *
-from servo import *
-from Led import *
-from Buzzer import *
-from ADC import *
-from Thread import *
-from Light import *
-from Ultrasonic import *
-from Line_Tracking import *
+from Code.Server.Motor import *
+from Code.Server.servo import *
+from Code.Server.Led import *
+from Code.Server.Buzzer import *
+from Code.Server.ADC import *
+from Code.Server.Thread import *
+from Code.Server.Light import *
+from Code.Server.Ultrasonic import *
+from Code.Server.Line_Tracking import *
 from threading import Timer
 from threading import Thread
-from Command import COMMAND as cmd
+from Code.Server.Command import COMMAND as cmd
 
-class Server:   
+class Server:
     def __init__(self):
         self.PWM=Motor()
         self.servo=Servo()
@@ -51,18 +51,18 @@ class Server:
         self.server_socket1.listen(1)
         self.server_socket = socket.socket()
         self.server_socket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEPORT,1)
-        self.server_socket.bind((HOST, 8000))              
+        self.server_socket.bind((HOST, 8000))
         self.server_socket.listen(1)
         print('Server address: '+HOST)
-        
-        
+
+
     def StopTcpServer(self):
         try:
             self.connection.close()
             self.connection1.close()
         except Exception as e:
             print ('\n'+"No client connection")
-         
+
     def Reset(self):
         self.StopTcpServer()
         self.StartTcpServer()
@@ -71,7 +71,7 @@ class Server:
         self.SendVideo.start()
         self.ReadData.start()
     def send(self,data):
-        self.connection1.send(data.encode('utf-8'))    
+        self.connection1.send(data.encode('utf-8'))
     def sendvideo(self):
         try:
             self.connection,self.client_address = self.server_socket.accept()
@@ -108,7 +108,7 @@ class Server:
         except:
             #print "Camera unintall"
             pass
-                 
+
     def stopMode(self):
         try:
             stop_thread(self.infraredRun)
@@ -119,7 +119,7 @@ class Server:
             stop_thread(self.lightRun)
             self.PWM.setMotorModel(0,0,0,0)
         except:
-            pass            
+            pass
         try:
             stop_thread(self.ultrasonicRun)
             self.PWM.setMotorModel(0,0,0,0)
@@ -127,7 +127,7 @@ class Server:
             self.servo.setServoPwm('1',90)
         except:
             pass
-        
+
     def readdata(self):
         try:
             try:
@@ -157,8 +157,8 @@ class Server:
                     cmdArray=AllData.split("\n")
                     if(cmdArray[-1] != ""):
                         restCmd=cmdArray[-1]
-                        cmdArray=cmdArray[:-1]     
-            
+                        cmdArray=cmdArray[:-1]
+
                 for oneCmd in cmdArray:
                     data=oneCmd.split("#")
                     if data==None:
@@ -182,7 +182,7 @@ class Server:
                             self.Mode='four'
                             self.infraredRun=threading.Thread(target=self.infrared.run)
                             self.infraredRun.start()
-                            
+
                     elif (cmd.CMD_MOTOR in data) and self.Mode=='one':
                         try:
                             data1=int(data[1])
@@ -258,9 +258,9 @@ class Server:
                             self.send(cmd.CMD_POWER+'#'+str(ADC_Power)+'\n')
                         except:
                             pass
-        except Exception as e: 
+        except Exception as e:
             print(e)
-        self.StopTcpServer()    
+        self.StopTcpServer()
     def sendUltrasonic(self):
         if self.sonic==True:
             ADC_Ultrasonic=self.ultrasonic.get_distance()
@@ -274,7 +274,7 @@ class Server:
     def sendLight(self):
         if self.Light==True:
             ADC_Light1=self.adc.recvADC(0)
-            ADC_Light2=self.adc.recvADC(1) 
+            ADC_Light2=self.adc.recvADC(1)
             try:
                 self.send(cmd.CMD_LIGHT+'#'+str(ADC_Light1)+'#'+str(ADC_Light2)+'\n')
             except:

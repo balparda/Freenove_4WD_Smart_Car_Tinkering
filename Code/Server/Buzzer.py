@@ -1,6 +1,6 @@
 import time
 import RPi.GPIO as GPIO
-from Command import COMMAND as cmd
+from Code.Server.Command import COMMAND as cmd
 GPIO.setwarnings(False)
 Buzzer_Pin = 17
 GPIO.setmode(GPIO.BCM)
@@ -16,7 +16,3 @@ if __name__=='__main__':
     B.run('1')
     time.sleep(3)
     B.run('0')
-
-
-
-
