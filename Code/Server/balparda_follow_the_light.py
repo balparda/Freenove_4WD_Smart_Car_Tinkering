@@ -20,7 +20,8 @@ else:
 
 _ANGLE_OF_VIEW = (53.5, 41.41)
 _NECK_OFFSET = (6, -30)
-_TEMPLATE = 'testimg/capture-002-%03d.jpg'
+_MOCK_TEMPLATE = 'Code/Server/testimg/capture-001-*.jpg'
+_SAVE_TEMPLATE = 'Code/Server/testimg/capture-002-%03d.jpg'
 
 
 def _MainPipelines(mock=False):
@@ -35,7 +36,7 @@ def _MainPipelines(mock=False):
   img_process = multiprocessing.Process(
       target=imaging.MockQueueImages if mock else car.QueueImages,
       name='image-pipeline',
-      args=((img_queue, img_stop, 'testimg/capture-001-*.jpg', .7) if mock else
+      args=((img_queue, img_stop, _MOCK_TEMPLATE, .7) if mock else
             (img_queue, img_stop)),
       daemon=True)
   # setup processing pipeline (feeding real or mock images) with its queue and process semaphore
@@ -99,18 +100,14 @@ def _MovementDecisionMaker(mock=False):
     def __init__(self):
       self._pos = (0, 0)
 
-    def __enter__(self):
+    def Zero(self):
       self._pos = (0, 0)
-      logging.info('Neck to zero/center')
+      logging.info('Neck to ZERO/CENTER')
 
-    def __exit__(self, a, b, c):
-      self._pos = (0, 0)
-      logging.info('Neck to zero/center')
-
-    def Delta(self, servo_dict):
-      self._pos = (self._pos[0] + servo_dict['H'], self._pos[1] + servo_dict['V'])
+    def Delta(self, x, y):
+      self._pos = (self._pos[0] + x, self._pos[1] + y)
       logging.info('Neck to position %r', self._pos)
-      time.sleep(0.2)
+      time.sleep(0.3)
 
   class _MockSonar():  # mock car.Sonar
 
@@ -127,7 +124,7 @@ def _MovementDecisionMaker(mock=False):
     """Take a "step" movement decision based on a camera and sonar reading."""
     # TODO: maybe move sonar readings into a separate pipeline?
     num_img, img, (x_focus, y_focus) = input
-    # img.Save(_TEMPLATE % num_img)  # uncomment to save the stream for testing...
+    # img.Save(_SAVE_TEMPLATE % num_img)  # uncomment to save the stream for testing...
     x_angle, y_angle = img.PointToAngle(x_focus, y_focus, _ANGLE_OF_VIEW[0], _ANGLE_OF_VIEW[1])
     x_angle, y_angle = int(x_angle), int(y_angle)
     dist = sonar.Read()
