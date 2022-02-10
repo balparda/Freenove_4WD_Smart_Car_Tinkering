@@ -5,7 +5,7 @@ _MOCK = False
 
 import logging
 import multiprocessing
-import pdb
+# import pdb
 import time
 
 import balparda_imaging as imaging
