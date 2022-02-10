@@ -16,12 +16,12 @@ print(ph)
 print(sn)
 print(ir)
 
-with ll.BB(), car.Neck(offset={'H': 6.0, 'V': -23.0}) as nk:
+with ll.BB(), car.Neck(offset=(6, -30)) as nk:
 
   nk.Demo()
   raise
 
-  nk.Set({'H': 0, 'V': 0})
+  nk.Zero()
   ll.Pa()
   nk.Zero()
   ll.Pa()
