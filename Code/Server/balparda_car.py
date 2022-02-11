@@ -7,7 +7,7 @@ import multiprocessing
 import multiprocessing.sharedctypes
 # import pdb
 import time
-from typing import Any, Dict, Iterator, Tuple
+from typing import Dict, Iterator, Tuple
 
 import picamera  # type: ignore
 
@@ -130,7 +130,7 @@ class Noise():
     """Create context object."""
     self._b = Buzzer.Buzzer()
 
-  def __enter__(self) -> Any:
+  def __enter__(self) -> 'Noise':
     """Enter context: start making noise."""
     logging.info('Beep!')
     self._b.run('1')
@@ -156,7 +156,7 @@ class Light():
     if not self._dict:
       raise Exception('Empty led_dict')
 
-  def __enter__(self) -> Any:
+  def __enter__(self) -> 'Light':
     """Enter context: turn on the leds."""
     logging.info('Lights @ %r', self._dict)
     for n, (r, g, b) in self._dict.items():
@@ -204,7 +204,7 @@ class Neck():
       raise Exception('Empty offset')
     self._o = (int(round(offset[0])), int(round(offset[1])))
 
-  def __enter__(self) -> Any:
+  def __enter__(self) -> 'Neck':
     """Enter context: reset neck to center."""
     self.Zero()
     return self
@@ -319,7 +319,7 @@ class Cam():
     self._resolution = resolution
     self._framerate = framerate
 
-  def __enter__(self) -> Any:
+  def __enter__(self) -> 'Cam':
     """Enter context: initialize the camera. ATTENTION: will block for 1.5 seconds."""
     self._c = picamera.PiCamera(resolution=self._resolution, framerate=self._framerate)
     logging.info(
