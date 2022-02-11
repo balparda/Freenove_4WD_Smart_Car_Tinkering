@@ -75,6 +75,21 @@ def Timed(func: Callable):
   return _wrapped_call
 
 
+def MinAngle(angle: int, allow_neg: bool = True) -> int:
+  """Make sure any int angle always reduced to minimum bounds.
+
+  Args:
+    angle: the angle in degrees
+    allow_neg: (default True) if True returned angle will be between -179 and 180 inclusive;
+        if False returned angle will be between 0 and 359 inclusive
+
+  Returns:
+    the `angle` reduced to either [-179,180] or [0,359], depending on `allow_neg`
+  """
+  angle = ((int(angle) % 360) + 360) % 360  # guaranteed 0 <= angle <= 359
+  return angle if not allow_neg or angle <= 180 else (angle - 360)
+
+
 def UpToDateProcessingPipeline(input_queue: multiprocessing.JoinableQueue,
                                output_queue: multiprocessing.JoinableQueue,
                                process_call: Callable,

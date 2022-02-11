@@ -19,6 +19,7 @@ from Code.Server import Motor
 from Code.Server import servo
 from Code.Server import Ultrasonic
 
+from Code.Server import balparda_lib as lib
 from Code.Server import balparda_imaging as imaging
 
 
@@ -111,7 +112,7 @@ class Engine():
 
     Works best when angle is +90 or -90 as car is actually non-linear.
     """
-    angle = int(angle)
+    angle = lib.MinAngle(angle)
     logging.info('Turn %d degrees', angle)
     tm = abs(angle * (.7/90))
     if angle > 0:
@@ -217,6 +218,7 @@ class Neck():
       h: horizontal angle, in degrees
       v: vertical angle, in degrees
     """
+    h, v = lib.MinAngle(h), lib.MinAngle(v)
     if h < -70: h = -70  # noqa: E701
     if h > 70:  h = 70   # noqa: E701
     if v < -20: v = -20  # noqa: E701

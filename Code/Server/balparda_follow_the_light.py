@@ -165,7 +165,7 @@ def _MovementDecisionMaker(motor_queue: multiprocessing.JoinableQueue,
     # img.Save(_SAVE_TEMPLATE % num_img)  # uncomment to save the stream for testing...
     # convert the point we got into angles as seen by the camera so we can plan to move the neck
     x_angle, y_angle = img.PointToAngle(x_focus, y_focus, _ANGLE_OF_VIEW[0], _ANGLE_OF_VIEW[1])
-    x_angle, y_angle = int(round(x_angle)), int(round(y_angle))
+    x_angle, y_angle = lib.MinAngle(int(round(x_angle))), lib.MinAngle(int(round(y_angle)))
     dist = sonar.Read()
     logging.info('Got foci for image #%04d: (%d, %d) @ %0.2fm', num_img, x_angle, y_angle, dist)
     if abs(x_angle) < _ANGLE_TARGET_PRECISION: x_angle = 0  # noqa: E701
