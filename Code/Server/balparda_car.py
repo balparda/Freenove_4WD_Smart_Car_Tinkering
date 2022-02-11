@@ -220,14 +220,10 @@ class Neck():
       h: horizontal angle, in degrees
       v: vertical angle, in degrees
     """
-    if h < -70:
-      h = -70
-    if h > 70:
-      h = 70
-    if v < -20:
-      v = -20
-    if v > 70:
-      v = 70
+    if h < -70: h = -70  # noqa: E701
+    if h > 70:  h = 70   # noqa: E701
+    if v < -20: v = -20  # noqa: E701
+    if v > 70:  v = 70   # noqa: E701
     logging.info('Neck to position %s', Neck._NECK_POSITION_STR((h, v)))
     self._Set(h, v)
 
@@ -265,6 +261,10 @@ class Neck():
   def __str__(self) -> str:
     """Readable respresentation of neck position."""
     return Neck._NECK_POSITION_STR(self._pos)
+
+  def Read(self) -> Tuple[int, int]:
+    """Get current neck position (h_angle, v_angle) in degrees."""
+    return self._pos
 
 
 class Infra():
