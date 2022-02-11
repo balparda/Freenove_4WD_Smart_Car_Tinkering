@@ -78,22 +78,20 @@ class Engine():
     self._m = Motor.Motor()
 
   def Move(self,
-           left_upper: int,
-           left_lower: int,
-           right_upper: int,
-           right_lower: int,
+           left_upper: float,
+           left_lower: float,
+           right_upper: float,
+           right_lower: float,
            tm: float) -> None:
     """Move car wheels for a certain time. Will block.
 
     Args:
-      left_upper: Speed to apply to upper left wheel, int, 1 to 10.
-      left_lower: Speed to apply to lower left wheel, int, 1 to 10.
-      right_upper: Speed to apply to upper right wheel, int, 1 to 10.
-      right_lower: Speed to apply to lower right wheel, int, 1 to 10.
+      left_upper: Speed to apply to upper left wheel, int, -10.0 to 10.0
+      left_lower: Speed to apply to lower left wheel, int, -10.0 to 10.0
+      right_upper: Speed to apply to upper right wheel, int, -10.0 to 10.0
+      right_lower: Speed to apply to lower right wheel, int, -10.0 to 10.0
       tm: Time to apply motors, in seconds.
     """
-    left_upper, left_lower = int(left_upper), int(left_lower)
-    right_upper, right_lower = int(right_upper), int(right_lower)
     try:
       self._m.setMotorModel(round(Engine._GAIN * left_upper),
                             round(Engine._GAIN * left_lower),
@@ -103,10 +101,9 @@ class Engine():
     finally:
       self._m.setMotorModel(0, 0, 0, 0)
 
-  def Straight(self, speed: int, tm: float) -> None:
+  def Straight(self, speed: float, tm: float) -> None:
     """Move car ahead at `speed` for `tm` seconds. Will block."""
-    speed = int(speed)
-    logging.info('Move at speed %d for %0.2f seconds', speed, tm)
+    logging.info('Move at speed %0.2f for %0.2f seconds', speed, tm)
     self.Move(speed, speed, speed, speed, tm)
 
   def Turn(self, angle: int) -> None:

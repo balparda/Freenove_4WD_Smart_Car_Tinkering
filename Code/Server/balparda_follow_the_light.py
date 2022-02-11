@@ -57,24 +57,42 @@ def _MainPipelines(mock: bool = False) -> None:
       args=(img_queue,         # feed from image queue
             brightness_queue,  # write to this new queue
             lambda i: (i[0], i[1], i[1].BrightnessFocus()),  # processing is trivial in fact
-            brightness_stop),
+            brightness_stop,
+            'brightness-pipeline'),
       daemon=True)
-  # setup moving pipeline (acting on real or mock cars) with its semaphore
-  movement_stop: multiprocessing.sharedctypes.Synchronized
-  movement_stop = multiprocessing.Value('b', 0, lock=True)  # type: ignore
-  movement_process = multiprocessing.Process(
+  # setup decision and neck (real or mock) pipeline with its semaphore
+  motor_queue = multiprocessing.JoinableQueue()  # type: multiprocessing.JoinableQueue
+  decision_stop: multiprocessing.sharedctypes.Synchronized
+  decision_stop = multiprocessing.Value('b', 0, lock=True)  # type: ignore
+  decision_process = multiprocessing.Process(
       target=lib.UpToDateProcessingPipeline,
-      name='movement-pipeline',
+      name='decision-pipeline',
       args=(brightness_queue,  # feed from brightness queue
             None,              # end of pipeline, so don't feed a new queue
-            _MovementDecisionMaker(desired_v_angle=_V_ANGLE, mock=mock),  # atual movement operation
-            movement_stop),
+            _MovementDecisionMaker(motor_queue,  # atual movement decision operation
+                                   desired_v_angle=_V_ANGLE,
+                                   mock=mock),
+            decision_stop,
+            'decision-pipeline'),
+      daemon=True)
+  # setup motor wheel moving pipeline (acting on real or mock cars) with its semaphore
+  motor_stop: multiprocessing.sharedctypes.Synchronized
+  motor_stop = multiprocessing.Value('b', 0, lock=True)  # type: ignore
+  motor_process = multiprocessing.Process(
+      target=lib.UpToDateProcessingPipeline,
+      name='motor-pipeline',
+      args=(motor_queue,  # feed from motor queue
+            None,         # end of pipeline, so don't feed a new queue
+            _MotorActuatorMaker(mock=mock),  # atual motor operation
+            motor_stop,
+            'motor-pipeline'),
       daemon=True)
   # start
-  logging.info('Starting pipeline processes: camera, brightness, car movement')
-  movement_process.start()
+  logging.info('Starting pipeline processes: camera, brightness, decision, neck & motor')
+  decision_process.start()
   brightness_process.start()
   img_process.start()
+  motor_process.start()
   try:
     # go to sleep while the pipeline does the job or while we wait for a Ctrl-C
     while True:
@@ -83,32 +101,28 @@ def _MainPipelines(mock: bool = False) -> None:
     # signal stop and wait for queues
     img_stop.value = 1
     brightness_stop.value = 1
-    movement_stop.value = 1
+    decision_stop.value = 1
+    motor_stop.value = 1
     logging.info('Waiting for image pipeline')
     img_process.join()
     logging.info('Waiting for processing pipeline')
     brightness_process.join()
-    logging.info('Waiting for movement pipeline')
-    movement_process.join()
+    logging.info('Waiting for decision pipeline')
+    decision_process.join()
+    logging.info('Waiting for motor pipeline')
+    motor_process.join()
 
 
-def _MovementDecisionMaker(desired_v_angle: int = 45, mock: bool = False) -> Callable:
+def _MovementDecisionMaker(motor_queue: multiprocessing.JoinableQueue,
+                           desired_v_angle: int = 45,
+                           mock: bool = False) -> Callable:
   """Create a decision maker incorporating either the real or a mock car.
 
   Args:
+    motor_queue: a multiprocessing.Queue object to write to
     desired_v_angle: (default 45) vertical angle the car will try to keep constant
     mock: (default False) if True will use mock car classes that don't require hardware to run
   """
-
-  class _MockEngine():  # mock car.Engine
-
-    def Straight(self, speed: int, tm: float) -> None:
-      logging.info('Move at speed %d for %0.2f seconds', speed, tm)
-      time.sleep(tm)
-
-    def Turn(self, angle: int) -> None:
-      logging.info('Turn %0.2f degrees', angle)
-      time.sleep(int(abs(angle * (.7/90))))
 
   class _MockNeck():  # mock car.Neck
 
@@ -127,7 +141,7 @@ def _MovementDecisionMaker(desired_v_angle: int = 45, mock: bool = False) -> Cal
       if v > 70:  v = 70   # noqa: E701
       self._pos = (h, v)
       logging.info('Neck to position (H: %+02d, V: %+02d) degrees', h, v)
-      time.sleep(0.3)
+      time.sleep(0.5)
 
     def Read(self) -> Tuple[int, int]:
       return self._pos
@@ -138,10 +152,8 @@ def _MovementDecisionMaker(desired_v_angle: int = 45, mock: bool = False) -> Cal
       time.sleep(0.1)
       return 1.0
 
-  engine: _MockEngine
   sonar: _MockSonar
   neck: _MockNeck
-  engine = _MockEngine() if mock else car.Engine()               # type: ignore
   sonar = _MockSonar() if mock else car.Sonar()                  # type: ignore
   neck = _MockNeck() if mock else car.Neck(offset=_NECK_OFFSET)  # type: ignore
   neck.Zero()
@@ -151,25 +163,68 @@ def _MovementDecisionMaker(desired_v_angle: int = 45, mock: bool = False) -> Cal
     # TODO: maybe move sonar readings into a separate pipeline? Is it even needed? Test sonar speed.
     num_img, img, (x_focus, y_focus) = input
     # img.Save(_SAVE_TEMPLATE % num_img)  # uncomment to save the stream for testing...
-    # convert the point we got into angles as seen by the camera, then point the camera there
+    # convert the point we got into angles as seen by the camera so we can plan to move the neck
     x_angle, y_angle = img.PointToAngle(x_focus, y_focus, _ANGLE_OF_VIEW[0], _ANGLE_OF_VIEW[1])
-    x_angle, y_angle = int(x_angle), int(y_angle)
+    x_angle, y_angle = int(round(x_angle)), int(round(y_angle))
     dist = sonar.Read()
     logging.info('Got foci for image #%04d: (%d, %d) @ %0.2fm', num_img, x_angle, y_angle, dist)
-    neck.Delta(x_angle, y_angle)
-    # now that neck moved we read the position to determine where to move the body of the car()
-    # we first correct for horizontal deviation and then decide to move either way
+    if abs(x_angle) < _ANGLE_TARGET_PRECISION: x_angle = 0  # noqa: E701
+    if abs(y_angle) < _ANGLE_TARGET_PRECISION: y_angle = 0  # noqa: E701
     h, v = neck.Read()
-    if abs(h) > _ANGLE_TARGET_PRECISION:  # need to turn?
-      engine.Turn(h)
+    h, v = h + x_angle, v + y_angle  # (h, v) is the predicted neck position after the neck move
+    # we now make the body (motor) moving decisions
+    move, move_angle, move_speed = False, 0, 0.0
+    if abs(h) >= _ANGLE_TARGET_PRECISION:  # need to turn?
+      move, move_angle = True, h
     if dist < _MIN_SONAR_DISTANCE:  # if we are too close to an obstacle we go back
-      engine.Straight(-_CAR_SPEED, _CAR_MOVE_INCREMENT_TIME)
+      logging.info('Obstacle detected')
+      move, move_speed = True, -_CAR_SPEED
     else:
-      if abs(desired_v_angle - v) > _ANGLE_TARGET_PRECISION:  # need to move?
-        engine.Straight(_CAR_SPEED if desired_v_angle > v else -_CAR_SPEED,
-                        _CAR_MOVE_INCREMENT_TIME)
+      if abs(desired_v_angle - v) >= _ANGLE_TARGET_PRECISION:  # need to move?
+        move, move_speed = True, _CAR_SPEED * (1 if desired_v_angle > v else -1)
+    # if we are going to move the car, then dispatch that to the body moving pipeline
+    if move:
+      motor_queue.put((move_angle, move_speed))
+    else:
+      logging.info('Car is on target')
+    # now that we dispatched that order, we move the neck in parallel
+    if x_angle or y_angle:
+      neck.Delta(x_angle, y_angle)
+    else:
+      logging.info('Neck is on target')
 
   return _MovementDecision
+
+
+def _MotorActuatorMaker(mock: bool = False) -> Callable:
+  """Create a motor actuator incorporating either the real or a mock car.
+
+  Args:
+    mock: (default False) if True will use mock car classes that don't require hardware to run
+  """
+
+  class _MockEngine():  # mock car.Engine
+
+    def Straight(self, speed: float, tm: float) -> None:
+      logging.info('Move at speed %d for %0.2f seconds', speed, tm)
+      time.sleep(tm)
+
+    def Turn(self, angle: int) -> None:
+      logging.info('Turn %0.2f degrees', angle)
+      time.sleep(int(abs(angle * (.7/90))))
+
+  engine: _MockEngine
+  engine = _MockEngine() if mock else car.Engine()  # type: ignore
+
+  def _MotorActuator(input: Tuple[int, float]) -> None:
+    """Execute a "step" motor action."""
+    move_angle, move_speed = input
+    if move_angle:
+      engine.Turn(move_angle)
+    if abs(move_speed) > 0.01:
+      engine.Straight(move_speed, _CAR_MOVE_INCREMENT_TIME)
+
+  return _MotorActuator
 
 
 def main() -> None:
