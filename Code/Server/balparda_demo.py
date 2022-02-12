@@ -18,9 +18,6 @@ print(ir)
 
 with ll.BB(), car.Neck(offset=(6, -30)) as nk:
 
-  nk.Demo()
-  raise
-
   nk.Zero()
   ll.Pa()
   nk.Zero()
