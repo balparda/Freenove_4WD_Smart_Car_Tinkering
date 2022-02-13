@@ -164,9 +164,12 @@ def UpToDateProcessingPipeline(input_queue: multiprocessing.JoinableQueue,
         input_queue.task_done()
   finally:
     # we need to finish consuming the queue now
+    time.sleep(0.3)  # helps make sure all objects have been inserted into input_queue
+                     # if we blaze past this code we might have someone put() stuff in the queue
     if input_queue.qsize():
       logging.debug('Discarding %d remaining tasks%s', input_queue.qsize(), pipeline_str)
     while input_queue.qsize():
       input_queue.get()  # discard value
       input_queue.task_done()
+    input_queue.close()
     logging.info('Processing pipeline ending%s', pipeline_str)

@@ -1,14 +1,12 @@
 #!/usr/bin/python3 -O
 """Follow-the-Light automaton program for the car."""
 
-# noqa: E402
-
 _MOCK = True
 
 import logging          # noqa: E402
 import multiprocessing  # noqa: E402
 import multiprocessing.sharedctypes  # noqa: E402
-# import pdb
+# import pdb                           # noqa: E402
 import time  # noqa: E402
 from typing import Callable, Tuple  # noqa: E402
 
@@ -20,23 +18,28 @@ else:
   car = None  # type: ignore
 
 
-_ANGLE_OF_VIEW = (53.5, 41.41)
-_NECK_OFFSET = (6, -30)
-_MIN_SONAR_DISTANCE = 0.20
-_V_ANGLE = 45
-_ANGLE_TARGET_PRECISION = 5
+_MAX_RUNTIME = 180.0            # seconds
+_ANGLE_OF_VIEW = (53.5, 41.41)  # degrees
+_NECK_OFFSET = (6, -30)         # degrees
+_MIN_SONAR_DISTANCE = 0.20      # meters
+_V_ANGLE = 45                   # degrees
+_ANGLE_TARGET_PRECISION = 5     # degrees
 _CAR_SPEED = 1
-_CAR_MOVE_INCREMENT_TIME = 0.5
+_CAR_MOVE_INCREMENT_TIME = 0.5  # seconds
 _MOCK_TEMPLATE = 'Code/Server/testimg/capture-001-*.jpg'
 _SAVE_TEMPLATE = 'Code/Server/testimg/capture-002-%03d.jpg'
 
 
-def _MainPipelines(mock: bool = False) -> None:
+def _MainPipelines(max_runtime: float = 3600.0, mock: bool = False) -> None:
   """Will start image pipelines pipe them into decision pipeline.
 
   Args:
+    max_runtime: (default 3600.0s, 1 hour) The max time, in seconds, the main loop will run
     mock: (default False) If True will use mock modules that load on regular machines, for testing
   """
+  max_runtime = float(max_runtime)
+  if max_runtime < 1.0:
+    raise Exception('max_runtime must be at least 1.0 (got %f)' % max_runtime)
   # setup image pipeline (real or mock) with its queue and process semaphore
   img_queue = multiprocessing.JoinableQueue()  # type: multiprocessing.JoinableQueue
   img_stop: multiprocessing.sharedctypes.Synchronized
@@ -88,22 +91,25 @@ def _MainPipelines(mock: bool = False) -> None:
             'motor-pipeline'),
       daemon=True)
   # start
-  logging.info('Starting pipeline processes: camera, brightness, decision, neck & motor')
+  ini_tm, runtime = time.time(), 0.0
+  logging.info(
+      'Starting pipeline processes: camera, brightness, decision, neck & motor (@%0.2f)', ini_tm)
   decision_process.start()
   brightness_process.start()
   img_process.start()
   motor_process.start()
   try:
-    # go to sleep while the pipeline does the job or while we wait for a Ctrl-C
-    while True:
+    # sleep while the pipeline does the job, or while we wait for a Ctrl-C, or while we count time
+    while runtime < max_runtime:
       time.sleep(0.3)  # main thread should mostly block here
+      runtime = time.time() - ini_tm
   finally:
     # signal stop and wait for queues
+    logging.info('End signal (@%0.2f seconds runtime). Waiting for image pipeline', runtime)
     img_stop.value = 1
     brightness_stop.value = 1
     decision_stop.value = 1
     motor_stop.value = 1
-    logging.info('Waiting for image pipeline')
     img_process.join()
     logging.info('Waiting for processing pipeline')
     brightness_process.join()
@@ -231,7 +237,7 @@ def main() -> None:
   """Execute main method."""
   logging.info('Start')
   try:
-    _MainPipelines(mock=_MOCK)
+    _MainPipelines(max_runtime=_MAX_RUNTIME, mock=_MOCK)
   finally:
     logging.info('End')
 
