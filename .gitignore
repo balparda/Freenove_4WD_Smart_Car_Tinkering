@@ -1,3 +1,11 @@
+
+# python bin
 *.swp
 *.swo
 __pycache__
+
+# environments and builds
+dist/**
+env/**
+.tox/**
+*.egg-info/**

@@ -1,0 +1,5 @@
+# Don't edit this, leave as is. Edit setup.cfg & tox.ini instead.
+# (https://setuptools.pypa.io/en/latest/userguide/quickstart.html)
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
