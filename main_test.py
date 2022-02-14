@@ -1,4 +1,3 @@
-#!/usr/bin/python3 -O
 """Test that the project runs."""
 
 from Code.Server import balparda_follow_the_light

@@ -1,4 +1,3 @@
-#!/usr/bin/python3 -O
 """Module will simplify car concepts to its bare minimal call, for beginner understanding."""
 
 import time

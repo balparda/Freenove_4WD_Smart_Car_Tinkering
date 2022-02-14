@@ -1,4 +1,3 @@
-#!/usr/bin/python3 -O
 """Follow-the-Light automaton program for the car."""
 
 _MOCK = True
@@ -240,9 +239,3 @@ def main() -> None:
     _MainPipelines(max_runtime=_MAX_RUNTIME, mock=_MOCK)
   finally:
     logging.info('End')
-
-
-if __name__ == '__main__':
-  lib.StartMultiprocessing()
-  lib.StartStdErrLogging()
-  main()

@@ -1,4 +1,3 @@
-#!/usr/bin/python3 -O
 """Balparda's car API."""
 
 import io
